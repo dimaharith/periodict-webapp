@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Update Patient Information</title>
+
+    <!-- Bootstrap core CSS -->
+    {% include 'styling.html' %}
+
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-dark bg-dark static-top" style="background-color: #678589 !important;">
+
+        <a class="navbar-brand" href="#">
+            <img src="img/PeriodictLogo.png" style="width: 150px; left: 15px;">
+        </a>
+        <p class="form-inline my-2 my-lg-0 ml-auto" style="color: white">
+         Dr. Jane Doe <span class="form-inline my-2 my-lg-0 ml-auto fa fa-user-circle" style="font-size: 30px; padding-left: 8%"></span>   
+        </p>
+        
+        <button class="navbar-toggler toggler-example" type="button" data-toggle="collapse" data-target="#navbarSupportedContent1" style="color: white" aria-controls="navbarSupportedContent1" aria-expanded="false" aria-label="Toggle navigation"><span class="dark-blue-text"><i
+        class="fas fa-bars fa-1x"></i></span></button>
+
+        <!-- Collapsible content -->
+        <div class="collapse navbar-collapse" id="navbarSupportedContent1">
+
+            <!-- Links -->
+            <ul class="navbar-nav ml-auto" >
+                <li class="navbar-nav ml-auto">
+                    <a class="nav-link" href="#" style="color: white"> My Account</a>
+                </li>
+                <li class="navbar-nav ml-auto">
+                    <a class="nav-link" href="index.html" style="color: white">Log Out</a>
+                </li>
+            </ul>
+            <!-- Links -->
+
+        </div>
+    </nav>
+
+    <nav class="navbar navbar-dark bg-dark static-top" style="background-color: #416469 !important; ">
+        <div class="mr-auto">
+        <a href="dashboard.html"><i class="fa fa-chevron-left" style="font-size: 20px;color:white;"></i></a> <span style="font-size: 20px; color: white; padding-left: 10px;"> Update Patient Information </span>
+        </div>
+        
+      
+
+    </nav>
+   
+  
+<div class="container h-100" style="padding-top: 3%">
+    <div class="row h-100 justify-content-center align-items-center">
+        <div class="col-10 col-md-8 col-lg-6">
+            <!-- Form -->
+            <form class="form-example" action="" method="post">
+                
+                <!-- Input fields -->
+                <div class="form-group">
+                    <label for="username"> ID </label>
+                    <input class="form-control" type="text" placeholder="1" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="firstname">First name </label>
+                    <input type="text" class="form-control" id="firstname" placeholder="First name" name="firstname">
+                </div>
+
+                <div class="form-group">
+                    <label for="lastname">Last name </label>
+                    <input type="text" class="form-control" id="lastname" placeholder="Last name" name="lastname">
+                </div>
+                 <div class="form-group">
+                    <label for="datepicker">Date of birth </label>
+                 <input id="datepicker" width="276" />
+                </div>
+                <script>
+                        $('#datepicker').datepicker({
+                            uiLibrary: 'bootstrap4'
+                        });
+                 </script>
+                <div class="form-group">
+                     <label for="datepicker"> Gender </label>
+                <div class="custom-control custom-radio custom-control-inline">
+                  <input type="radio" id="customRadioInline1" name="customRadioInline1" class="custom-control-input"  checked="">
+                  <label class="custom-control-label" for="customRadioInline1"  style="padding-left: 20px !important;">Female</label>
+                </div>
+                    
+                <div class="custom-control custom-radio custom-control-inline">
+                  <input type="radio" id="customRadioInline2" name="customRadioInline1" class="custom-control-input">
+                  <label class="custom-control-label" for="customRadioInline2" style="padding-left: 20px !important;"> Male</label>
+                </div>
+                    </div>
+                 <div class="form-group">
+                     <label for="ortho"> Type of orthodontic appliance </label>
+                <select class="custom-select">
+              <option selected>No orthodontic appliance</option>
+              <option value="1">Fixed appliance</option>
+              <option value="2">Clear aligners (i.e. Invisalign)</option>
+            </select>
+                  </div>     
+               <div class="col text-center">
+                 <button type="submit" class="btn btn-info btn-default" style="width:50%">Update Information</button>
+        
+                </div>
+                
+              <!--<button type="submit" class="btn btn-info btn-default">Add patient</button>-->
+             
+            </form>
+            <!-- Form end -->
+    </div>
+</div>
+    
+    </div>
+    
+    <!--
+      <div class="col-md-6">
+        <div>
+         <h2> Sign in to get started! </h2>
+        </div> -->
+
+    <!-- Masthead -->
+
+    <!-- Icons Grid -->
+    <!-- <section class="features-icons bg-light text-center">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-4">
+          <div class="features-icons-item mx-auto mb-5 mb-lg-0 mb-lg-3">
+            <div class="features-icons-icon d-flex">
+              <i class="icon-screen-desktop m-auto text-primary"></i>
+            </div>
+            <h3>Fully Responsive</h3>
+            <p class="lead mb-0">This theme will look great on any device, no matter the size!</p>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="features-icons-item mx-auto mb-5 mb-lg-0 mb-lg-3">
+            <div class="features-icons-icon d-flex">
+              <i class="icon-layers m-auto text-primary"></i>
+            </div>
+            <h3>Bootstrap 4 Ready</h3>
+            <p class="lead mb-0">Featuring the latest build of the new Bootstrap 4 framework!</p>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="features-icons-item mx-auto mb-0 mb-lg-3">
+            <div class="features-icons-icon d-flex">
+              <i class="icon-check m-auto text-primary"></i>
+            </div>
+            <h3>Easy to Use</h3>
+            <p class="lead mb-0">Ready to use with your own content, or customize the source files!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+
+    <!-- Bootstrap core JavaScript -->
+     {% include 'scripting.html' %}
+</body>
+
+</html>
