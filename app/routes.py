@@ -15,14 +15,30 @@ def forgotpassword():
 def dashboard():
     return render_template('dashboard.html')
 
-@app.route('/addapatient')
-def addapatient():
-    return render_template('addapatient.html')
+@app.route('/addpatient')
+def addpatient():
+    return render_template('addpatient.html')
 
 @app.route('/updatepatient')
 def updatepatient():
-    return render_template('editapatient.html')
+    return render_template('editpatient.html')
 
 @app.route('/myaccount')
 def myaccount():
     return render_template('myaccount.html')
+
+@app.route('/patientoverview')
+def patientoverview():
+    return render_template('patientoverview.html')
+
+@app.route('/diagnosis')
+def diagnosis():
+    return render_template('diagnosis.html')
+
+@app.route('/timeline')
+def timeline():
+    return render_template('timeline.html')
+
+@app.route('/patienthistory')
+def patienthistory():
+    return render_template('patienthistory.html')

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Patient Overview</title>
+
+ 
+    {% include 'styling.html' %}
+
+</head>
+
+<body>
+
+    <!-- Navigation -->
+     {% include 'header.html' %}
+
+
+    <nav class="navbar navbar-dark bg-dark static-top" style="background-color: #416469 !important; ">
+        <div class="mr-auto">
+        <a href="dashboard"><i class="fa fa-chevron-left" style="font-size: 20px;color:white;"></i></a> <span style="font-size: 20px; color: white; padding-left: 10px;"> Patient Overview </span>
+        </div>
+        
+      
+
+    </nav>
+
+ <div class="row" style="margin-top: 3em;">
+  <div class="col-md-5">
+     <div class="card" style="width: 30em; height: 25em; margin:0 auto; margin-top: 2em;">
+  <div class="card-body">
+      <div class="row" >
+       <div class="col-2">
+       <span class="form-inline mr-auto fa fa-user-circle" style="color:#b9b9b9; font-size: 50px;"></span>
+      </div>
+     <div class="col-8">
+       <h5 class="card-title" style="color:#416469; margin-top: 10px;">John Doe</h5>
+      </div>
+          <div class="col-2">
+              <a href="updatepatient">
+              <span class="form-inline mr-auto far fa-edit" style="color:#b9b9b9; font-size: 30px; margin-top: 10px;"></span>
+              </a>
+       
+      </div>
+      </div>
+     <div class="row" style="margin-top: 3em;">
+       <div class="col-6 patientinfo">
+            <p>ID</p>
+           <p>Full name</p>
+           <p>Date of Birth</p>
+           <p>Gender</p>
+           <p>Type of Orthodontic Appliance</p>
+      </div>
+     <div class="col-6 patientinfo-dark">
+       <p>1</p>
+         <p>John Doe</p>
+         <p>9/9/1997</p>
+         <p>Male</p>
+         <p>Fixed appliance</p>
+      </div>
+      </div>
+      <div class="col text-center">
+   <button type="button" class="btn btn-outline-info btn-sm" style="margin: 5px;"> View patient history </button>
+      
+   </div>
+  </div>
+</div>
+     
+     
+     </div>
+     
+     
+     
+     
+     
+     
+     <!--   column two -->
+     
+     
+      
+     
+  <div class="col-md-7">
+  <div class="card border-light mb-3 diagnosis-card">
+          <div class="card-header">Periodontal disease diagnosis</div>
+  <div class="card-body text-info">
+     <div class="row">
+       <div class="col-8 patientinfo">
+            Upload a single image to diagnose the patient with periodontal disease
+           <p class="text-secondary"><br> Accepted formats: .jpg, .jpeg, .png</p>
+      </div>
+         
+     <div class="col-4 patientinfo-dark"><div>
+         <button type="button" class="btn btn-info btn-sm" style="margin: 1.5em; margin-left: 1em; width: 90%" data-toggle="modal" data-target="#singleUpload"> Upload a single image</button></div>
+      </div>
+      </div>
+     
+  </div>
+</div> 
+       <div class="card border-light mb-3 diagnosis-card">
+          <div class="card-header">Comparative timeline and diagnosis</div>
+  <div class="card-body text-info">
+     <div class="row">
+       <div class="col-8 patientinfo">
+            Upload a series of images to view a timeline of the patient's progress
+           <p class="text-secondary"><br> Accepted formats: .jpg, .jpeg, .png</p>
+      </div>
+     <div class="col-4 patientinfo-dark"><div>
+         <button type="button" class="btn btn-info btn-sm" style="margin: 0.7em; margin-left: 1em;" data-toggle="modal" data-target="#seriesUpload"> Construct comparative timeline</button></div>
+      </div>
+      </div>
+     
+  </div>
+</div>  
+     
+      
+      
+     
+      
+  
+     
+     
+     
+     </div>
+
+</div> 
+    
+    <!--MODALS-->
+    <div class="modal fade" id="singleUpload" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle" style="color:#416469">Upload a single image</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class=" text-info">  Upload a single image below to begin periodontal disease diagnosis </p> 
+          <form class="form" action="" method="post">
+        <div class="custom-file">
+            <input type="file" class="custom-file-input" id="customFile">
+            <label class="custom-file-label" for="customFile">Choose file</label>
+        </div>
+
+          </form>
+          
+      
+        
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-info">Upload</button>
+      </div>
+    </div>
+  </div>
+        </div></div>
+    
+    <div class="modal fade" id="seriesUpload" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle" style="color:#416469">Upload a series of images</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class=" text-info">  Upload a series image below to begin periodontal disease diagnosis and construct a comparative timeline </p> 
+          <form class="form" action="" method="post">
+              <p> Before applying orthodontic appliance (T0) </p>
+        <div class="custom-file">
+            <input type="file" class="custom-file-input" id="img10">
+            <label class="custom-file-label" for="img10">Choose file</label>
+        </div>
+
+              <p style="margin-top: 1em"> One week after application (T1) </p>
+        <div class="custom-file">
+            <input type="file" class="custom-file-input" id="imgt1">
+            <label class="custom-file-label" for="imgt1">Choose file</label>
+        </div>
+              
+              <p style="margin-top: 1em"> Four weeks after application (T2) </p>
+        <div class="custom-file">
+            <input type="file" class="custom-file-input" id="imgt2">
+            <label class="custom-file-label" for="imgt2">Choose file</label>
+        </div>
+          </form>
+          
+      
+        
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-info">Upload</button>
+      </div>
+    </div>
+  </div>
+        </div></div>
+  <!-- Footer -->
+    <!-- Bootstrap core JavaScript -->
+     {% include 'scripting.html' %}
+
+  
+             
+</body>
+
+</html>

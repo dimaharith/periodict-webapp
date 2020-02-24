@@ -6,7 +6,7 @@
 body{
     font-family:Lato,'Helvetica Neue',Helvetica,Arial,sans-serif;
     background-color: #f0f0f0;
-    overflow: hidden;
+    overflow-x: hidden;
     
 }
 .example::-webkit-scrollbar {
@@ -17,8 +17,38 @@ h1,h2,h3,h4,h5,h6{
     font-weight:700
 }
 
+.patientinfo-label p
+{
+    font-size: 15px;
+    color: #7ba7ad;
+ 
+    text-align: right;
+}
+.mycontainer {
+    width: 1290px;
+  }
+}
+.patientinfo p
+{
+    font-size: 15px;
+    color: #4b4b4b;
 
-
+    text-align: left;
+}
+.diagnosis-card
+{
+    width: 50em; 
+    height: 10em; 
+    margin:auto; 
+    margin-top: 2em; 
+    right:2em;
+}
+.patientinfo-dark p
+{
+    font-size: 15px;
+    color: #4b4b4b;
+    margin-top: 10px;
+}
 
 .div-wrapper {
     height: 200px;
@@ -42,9 +72,11 @@ h1,h2,h3,h4,h5,h6{
 }
 .table-responsive {
   max-height:700px;
-  display:inline-block;
+    display: table;
+ 
   
 }
+
 .spacer {
     padding-bottom: 10px;
     padding-top: 10px;

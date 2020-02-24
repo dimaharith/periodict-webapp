@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Comparative Timeline &amp; Diagnosis </title>
+    
+    {% include 'styling.html' %}
+    
+
+</head>
+
+<body>
+
+    <!-- Navigation -->
+   {% include 'header.html' %}
+
+    <nav class="navbar navbar-dark bg-dark static-top" style="background-color: #416469 !important; ">
+        <div class="mr-auto">
+            <a href="dashboard.html"><i class="fa fa-chevron-left" style="font-size: 20px;color:white;"></i></a> <span style="font-size: 20px; color: white; padding-left: 10px;"> Comparative Timeline &amp; Diagnosis </span>
+        </div>
+
+    </nav>
+    
+    <!-- Patient Info Card -->
+    <div class="row" style="margin-top: 1em;">
+        <div class="col-md-12">
+            <div class="card" style="width: 90%; height: 10em; margin:0 auto;">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2">
+<div class="row" style="margin-top: 2em; margin-left: 1em;">
+      <div class="col-2">
+       <span class="form-inline mr-auto fa fa-user-circle" style="color:#b9b9b9; font-size: 50px;"></span>
+      </div>
+     <div class="col-10">
+       <h5 class="card-title" style="color:#416469; margin-top: 10px; margin-left: 1.5em;">John Doe</h5>
+      </div>
+    
+                            </div>
+                        
+      
+
+                        </div>
+                        <div class="col-9">
+                            <div class="row" style="margin-top: 1em;">
+                                <div class="col-2 patientinfo-label">
+                                    <p> ID </p>
+                                    <p> Full Name </p>
+                                </div>
+                              <div class="col-2 patientinfo">
+                                    <p> 1 </p>
+                                    <p> John Doe </p>
+                                </div>
+                                <div class="col-2 patientinfo-label">
+                                    <p> Date of birth </p>
+                                    <p> Gender </p>
+                                </div>
+                                 <div class="col-2 patientinfo">
+                                    <p> 9/9/1997 </p>
+                                    <p> Male </p>
+                                </div>
+                                 <div class="col-2 patientinfo-label">
+                                    <p> Type of orthodontic appliance </p>
+                                </div>
+                               <div class="col-2 patientinfo">
+                                    <p> Fixed appliance </p>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+    <!-- Patient Info Card END -->
+
+  <div class="mycontainer" style="margin: auto;">
+      
+        <div class="row" style="margin-top: 1em;">
+     <div class="col-md-4">
+         <p style="text-align: center;"> Before applying orthodontic appliance (T0) </p>
+       <div class="card" style="width: auto; height: auto; margin:0 auto;">
+  <img src="{{ url_for('static', filename='img/img-placeholder.png') }}"  style="height: 100%; width: 100%;" alt="Card image cap">
+</div>
+         <!--table-->
+         <div class="table-responsive">
+
+                <table class="table table-sm table-hover w-100  d-block d-md-table" style="margin: auto;">
+                    <thead>
+                        <tr class="spacer" style="background-color: #678589; color: white;">
+
+                            <th scope="col" colspan="2">Diagnosis</th>
+                            <th scope="col" colspan="2" style="text-align: left">Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="spacer">
+                            <td colspan="2">Positive</td>
+                            <td colspan="2">Moderate</td>
+                        </tr>
+                    </tbody>
+                      <thead>
+                        <tr class="spacer" style="background-color: #678589; color: white;">
+
+                            <th scope="col">Clincal Findings</th>
+                            <th scope="col" style="text-align: center">F1</th>
+                            <th scope="col" style="text-align: center">F2</th>
+                            <th scope="col" style="text-align: center">F3</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="spacer">
+                            <td></td>
+                            <td style="text-align: center">0.79</td>
+                            <td style="text-align: center">0.56</td>
+                            <td style="text-align: center">0.32</td>
+                        </tr>
+                    </tbody>
+                    <thead>
+                        <tr class="spacer" style="background-color: #678589; color: white;">
+                            <th scope="col" colspan="4" style="text-align: left">Plaque Levels</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="spacer">
+                            <td colspan="4">36%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+         <!-- table end-->
+        </div>
+ <div class="col-md-4">
+      <p style="text-align: center;"> One week after application (T1) </p>
+        <div class="card" style="width: auto; height: auto; margin:0 auto;">
+  <img src="{{ url_for('static', filename='img/img-placeholder.png') }}" style="height: 100%; width: 100%;" alt="Card image cap">
+</div>
+        <!--table-->
+         <div class="table-responsive">
+
+                <table class="table table-sm table-hover w-100  d-block d-md-table" style="margin: auto;">
+                    <thead>
+                        <tr class="spacer" style="background-color: #678589; color: white;">
+
+                            <th scope="col" colspan="2">Diagnosis</th>
+                            <th scope="col" colspan="2" style="text-align: left">Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="spacer">
+                            <td colspan="2">Positive</td>
+                            <td colspan="2">Moderate</td>
+                        </tr>
+                    </tbody>
+                      <thead>
+                        <tr class="spacer" style="background-color: #678589; color: white;">
+
+                            <th scope="col">Clincal Findings</th>
+                            <th scope="col" style="text-align: center">F1</th>
+                            <th scope="col" style="text-align: center">F2</th>
+                            <th scope="col" style="text-align: center">F3</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="spacer">
+                            <td></td>
+                            <td style="text-align: center">0.79</td>
+                            <td style="text-align: center">0.56</td>
+                            <td style="text-align: center">0.32</td>
+                        </tr>
+                    </tbody>
+                    <thead>
+                        <tr class="spacer" style="background-color: #678589; color: white;">
+                            <th scope="col" colspan="4" style="text-align: left">Plaque Levels</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="spacer">
+                            <td colspan="4">36%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+         <!-- table end-->
+        </div>
+         <div class="col-md-4">
+              <p style="text-align: center;"> Four weeks after application (T2) </p>
+        <div class="card" style="width: auto; height: auto; margin:0 auto;">
+  <img src="{{ url_for('static', filename='img/img-placeholder.png') }}" style="height: 100%; width: 100%;" alt="Card image cap">
+</div>
+        <!--table-->
+         <div class="table-responsive">
+
+                <table class="table table-sm table-hover w-100  d-block d-md-table" style="margin: auto;">
+                    <thead>
+                        <tr class="spacer" style="background-color: #678589; color: white;">
+
+                            <th scope="col" colspan="2">Diagnosis</th>
+                            <th scope="col" colspan="2" style="text-align: left">Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="spacer">
+                            <td colspan="2">Positive</td>
+                            <td colspan="2">Moderate</td>
+                        </tr>
+                    </tbody>
+                      <thead>
+                        <tr class="spacer" style="background-color: #678589; color: white;">
+
+                            <th scope="col">Clincal Findings</th>
+                            <th scope="col" style="text-align: center">F1</th>
+                            <th scope="col" style="text-align: center">F2</th>
+                            <th scope="col" style="text-align: center">F3</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="spacer">
+                            <td></td>
+                            <td style="text-align: center">0.79</td>
+                            <td style="text-align: center">0.56</td>
+                            <td style="text-align: center">0.32</td>
+                        </tr>
+                    </tbody>
+                    <thead>
+                        <tr class="spacer" style="background-color: #678589; color: white;">
+                            <th scope="col" colspan="4" style="text-align: left">Plaque Levels</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="spacer">
+                            <td colspan="4">36%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+         <!-- table end-->
+        </div>
+    </div>
+    
+    </div>
+
+  
+     <div class="row" style="margin-top: 2em; margin-bottom: 3em;">
+         <div class="card " style="width:73.5%; margin-left:8.3em !important;">
+        <p style="margin: 5px"> <span style="color:#678589; margin-left: 5px"> Diagnosis &nbsp;&nbsp;&nbsp;</span> The patient's case seems to be worsening rapidly</p>
+        </div>
+    <button class="btn btn-info ml-auto" style="margin-right: 9em; width: 8%" type="button"> Done </button>
+    </div>
+    <!-- Diagnosis Info END -->
+    <!-- Footer -->
+    <!-- Bootstrap core JavaScript -->
+  {% include 'scripting.html' %}
+
+</body>
+
+</html>
