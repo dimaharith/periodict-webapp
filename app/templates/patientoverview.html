@@ -1,29 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
-
-    <title>Patient Overview</title>
-
- 
-    {% include 'styling.html' %}
-
-</head>
+{% extends "template.html" %}
+{% block title %}Patient Overview{% endblock %}
+{% block body %}
 
 <body>
-
-    <!-- Navigation -->
-     {% include 'header.html' %}
 
 
     <nav class="navbar navbar-dark bg-dark static-top" style="background-color: #416469 !important; ">
         <div class="mr-auto">
-        <a href="dashboard"><i class="fa fa-chevron-left" style="font-size: 20px;color:white;"></i></a> <span style="font-size: 20px; color: white; padding-left: 10px;"> Patient Overview </span>
+        <a href="/dashboard"><i class="fa fa-chevron-left" style="font-size: 20px;color:white;"></i></a> <span style="font-size: 20px; color: white; padding-left: 10px;"> Patient Overview </span>
         </div>
         
       
@@ -39,7 +23,7 @@
        <span class="form-inline mr-auto fa fa-user-circle" style="color:#b9b9b9; font-size: 50px;"></span>
       </div>
      <div class="col-8">
-       <h5 class="card-title" style="color:#416469; margin-top: 10px;">John Doe</h5>
+       <h5 class="card-title" style="color:#416469; margin-top: 10px;">{{ patient.firstname }} {{ patient.lastname }}</h5>
       </div>
           <div class="col-2">
               <a href="updatepatient">
@@ -57,11 +41,11 @@
            <p>Type of Orthodontic Appliance</p>
       </div>
      <div class="col-6 patientinfo-dark">
-       <p>1</p>
-         <p>John Doe</p>
-         <p>9/9/1997</p>
-         <p>Male</p>
-         <p>Fixed appliance</p>
+       <p>{{ patient.govID }}</p>
+         <p>{{ patient.firstname }} {{ patient.lastname }}</p>
+         <p>{{ patient.DOB }}</p>
+         <p>{{ patient.Gender }}</p>
+         <p>{{ patient.OrthoType }}</p>
       </div>
       </div>
       <div class="col text-center">
@@ -198,13 +182,7 @@
       </div>
     </div>
   </div>
-        </div></div>
-  <!-- Footer -->
-    <!-- Bootstrap core JavaScript -->
-     {% include 'scripting.html' %}
-
-  
-             
+        </div></div>          
 </body>
 
-</html>
+{% endblock %}

@@ -1,124 +1,44 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "template.html" %}
+{% block title %}Home{% endblock %}
+{% block body %}
 
-<head>
-
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
-
-    <title>PerioDict</title>
-    {% include 'styling.html' %}
-    <!-- Bootstrap core CSS -->
-   
-
-</head>
-
-<body>
-
-    <!-- Navigation -->
-
-    <nav class="navbar navbar-dark bg-dark static-top" style="background-color: #678589 !important;">
-        
-            <a class="navbar-brand" href="#">
-            <img src="{{ url_for('static', filename='img/PeriodictLogo.png') }}" style="width: 150px; left: 15px;">
-        </a>
-       
-    </nav>
-
-    <!--
-      <div class="col-md-6">
-        <div>
-         <h2> Sign in to get started! </h2>
-        </div> -->
+<body style="overflow-y: hidden !important ;
+    background: url(../static/img/office.jpg); background-repeat: no-repeat;
+  background-size: cover;">
 
     <div class="h-100 d-flex justify-content-center align-items-center" style="margin-top: 7%;">
-        <div class="col-lg-3" style="margin-bottom: 15%">
-            <h1 style="color:#868686"> Welcome to <span style="color:#678589"> PerioDict </span></h1>
-
-        </div>
-        <div>
-            <card>
-                <article class="card-body" style="color: #485557 !important;">
-                    <h4 class="card-title mb-4 mt-1">Sign in</h4>
-                    <form>
-                        <div class="form-group">
-                            <label>Email</label>
-                            <input name="" class="form-control" placeholder="Email" type="email">
-                        </div>
-                        <!-- form-group// -->
-                        <div class="form-group">
-
-                            <label>Password</label>
-                            <input class="form-control" placeholder="******" type="password">
-
-                        </div>
-                        <!-- form-group// -->
-                        <div class="form-group">
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox"> Remember me </label>
-                            </div>
-                            <!-- checkbox .// -->
-                        </div>
-                        <!-- form-group// -->
-                        <div class="form-group">
-                          <button  type="submit" class="btn btn-info btn-block"> Login </button>
-
-                        </div>
-                        <!-- form-group// -->
-                        <a class="float-center" href="forgotpassword">Forgot password?</a>
-                    </form>
-                </article>
-            </card>
-        </div>
+        
+           <div class="col-lg-3" style="margin-bottom: 15%">
+                <div class="card mx-auto" style="width: 20rem;">
+  <div class="card-body">
+    <h5 class="card-title">Login</h5>
+    <h6 class="card-subtitle mb-2 text-muted">Log into PerioDict to view your patients, start assessments, and view comparative timelines </h6>
+    <p class="card-text" style="line-height: 20px;"></p>
+      <form class="form-example" method="POST" action="{{ url_for('index')}}">
+                <!-- Input fields -->
+                {{ form.csrf_token }}
+                {{ render_field(form.email, placeholder=form.email.label.text)}}
+                {{ render_field(form.password, placeholder=form.password.label.text, type='password')}}
+               <div class="col text-center">
+                 <button type="submit" class="btn btn-info btn-default">Login</button>
+                </div>
+                 <a class="float-center" href="{{ url_for('forgotpassword')}}">Forgot password?</a>
+            </form>
+            {%  for message in get_flashed_messages() %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-top: 1rem; font-size: 15px; text-align: center;">
+            {{message}}
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+{% endfor %}
+              </div>
+            </div>    
+            </div>
+           
+        
     </div>
-
-    <!-- Masthead -->
-
-    <!-- Icons Grid -->
-    <!-- <section class="features-icons bg-light text-center">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-4">
-          <div class="features-icons-item mx-auto mb-5 mb-lg-0 mb-lg-3">
-            <div class="features-icons-icon d-flex">
-              <i class="icon-screen-desktop m-auto text-primary"></i>
-            </div>
-            <h3>Fully Responsive</h3>
-            <p class="lead mb-0">This theme will look great on any device, no matter the size!</p>
-          </div>
-        </div>
-        <div class="col-lg-4">
-          <div class="features-icons-item mx-auto mb-5 mb-lg-0 mb-lg-3">
-            <div class="features-icons-icon d-flex">
-              <i class="icon-layers m-auto text-primary"></i>
-            </div>
-            <h3>Bootstrap 4 Ready</h3>
-            <p class="lead mb-0">Featuring the latest build of the new Bootstrap 4 framework!</p>
-          </div>
-        </div>
-        <div class="col-lg-4">
-          <div class="features-icons-item mx-auto mb-0 mb-lg-3">
-            <div class="features-icons-icon d-flex">
-              <i class="icon-check m-auto text-primary"></i>
-            </div>
-            <h3>Easy to Use</h3>
-            <p class="lead mb-0">Ready to use with your own content, or customize the source files!</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Footer -->
-
-    <!-- Bootstrap core JavaScript -->
-    {% include 'scripting.html' %}
-    <script src="vendor/jquery/jquery.min.js"></script>
-    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
 </body>
 
-</html>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% from "_render_field.html" import render_field, render_radio_fields, render_radio_field, render_checkbox %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>{% block title %}{% endblock %} - PerioDict </title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/fontawesome-free/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/simple-line-icons/css/simple-line-icons.css') }}" type="text/css">
+    <!-- Custom fonts for this template -->
+    
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css">
+
+    <!-- Custom styles for this template -->
+  
+<link rel="stylesheet" href="{{ url_for('static', filename='css/landing-page.min.css') }}" type="text/css">
+
+    <!-- Bootstrap core CSS -->
+   
+
+</head>
+
+     {% if pageType == 'index'  %}
+<body style="overflow-y: hidden !important; background-repeat: no-repeat;
+  background-size: cover;">
+         <nav class="navbar navbar-dark bg-dark static-top" style="background-color: #678589 !important;">
+    
+    <a class="navbar-brand" href="#">
+            <img src="{{ url_for('static', filename='img/PeriodictLogo.png') }}" style="width: 150px;">
+        </a>
+       
+
+
+   
+        
+    </nav>
+    {% elif pageType =='forgotpassword' %}
+    <body style="overflow-y: hidden !important ; background-color:  #f0f0f0; background-repeat: no-repeat;
+  background-size: cover;">
+                 <nav class="navbar navbar-dark bg-dark static-top" style="background-color: #678589 !important;">
+        
+            <a class="navbar-brand" href="#">
+            <img src="{{ url_for('static', filename='img/PeriodictLogo.png') }}" style="width: 150px; left: 15px;">
+        </a>
+       
+    </nav>
+    {% else %}
+    <body style="background-color: #f0f0f0 !important;">
+    <!-- Navigation -->
+
+    <nav class="navbar navbar-dark bg-dark static-top" style="background-color: #678589 !important;">
+
+        <a class="navbar-brand" href="#">
+            <img src="{{ url_for('static', filename='img/PeriodictLogo.png') }}" style="width: 150px; left: 15px;">
+        </a>
+        <p class="form-inline my-2 my-lg-0 ml-auto" style="color: white">
+         Dr. {{session['fullname']}} {{session['lastname']}}  <span class="form-inline my-2 my-lg-0 ml-auto fa fa-user-circle" style="font-size: 30px; padding-left: 8%"></span>   
+        </p>
+        
+        <button class="navbar-toggler toggler-example" type="button" data-toggle="collapse" data-target="#navbarSupportedContent1" style="color: white" aria-controls="navbarSupportedContent1" aria-expanded="false" aria-label="Toggle navigation"><span class="dark-blue-text"><i
+        class="fas fa-bars fa-1x"></i></span></button>
+
+        <!-- Collapsible content -->
+        <div class="collapse navbar-collapse" id="navbarSupportedContent1">
+
+            <!-- Links -->
+            <ul class="navbar-nav ml-auto" >
+                <li class="navbar-nav ml-auto">
+                    <a class="nav-link" href="{{ url_for('myaccount')}}" style="color: white"> My Account</a>
+                </li>
+                <li class="navbar-nav ml-auto">
+                    <a class="nav-link" href="{{ url_for('logout')}}" style="color: white">Log Out</a>
+                </li>
+            </ul>
+            <!-- Links -->
+
+        </div>
+    </nav>
+    {% endif %}
+
+    {% block body%}
+    {% endblock %}
+
+    <script src="{{ url_for('static', filename='vendor/jquery/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>

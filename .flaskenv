@@ -1,1 +1,2 @@
 FLASK_APP=periodictweb.py
+FLASK_ENVIRONMENT=development
