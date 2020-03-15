@@ -22,7 +22,13 @@
                <div class="col text-center">
                  <button type="submit" class="btn btn-info btn-default">Login</button>
                 </div>
-                 <a class="float-center" href="{{ url_for('forgotpassword')}}">Forgot password?</a>
+                 <div class="col text-center" style="margin-top: 1rem;">
+                 <a class="float-center" href="{{ url_for('forgotpassword')}}">Forgot password?</a> <br>
+                  
+               </div>
+               <div class="col text-center" style="margin-top: 1rem;">
+               Don't have an account? <br> <a class="float-center" href="{{ url_for('register')}}"> Register here</a>
+             </div>
             </form>
             {%  for message in get_flashed_messages() %}
             <div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-top: 1rem; font-size: 15px; text-align: center;">

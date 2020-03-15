@@ -18,13 +18,45 @@
         </form>
     </nav>
     
-  
+    {% with errors = get_flashed_messages(category_filter=["error"]) %}
+  {% if errors %}
+
+ 
+    {%- for msg in errors %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-top: 1rem; font-size: 15px; text-align: center;">
+            {{msg}}
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+    {% endfor -%}
+ 
+
+{% endif %}
+{% endwith %}
+
+    {% with success = get_flashed_messages(category_filter=["success"]) %}
+  {% if success %}
+
+ 
+    {%- for msg in success %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert" style="margin-top: 1rem; font-size: 15px; text-align: center;">
+            {{msg}}
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+    {% endfor -%}
+ 
+
+{% endif %}
+{% endwith %}
     
  
     <div class="table-responsive">
        {% if patients %}
 <table class="table table-hover table-light">
-  <thead  >
+  <thead >
     <tr class="spacer" style="background-color: #678589; color: white">
       <th scope="col"></th>
       <th scope="col">First Name</th>
@@ -40,7 +72,7 @@
       <td>{{ patient['firstname'] }}</td>
       <td>{{ patient['lastname'] }}</td>
       <td>
-        <button class="fa fa-chevron-right" style="    background-color: Transparent;
+        <button class="fa fa-chevron-right" style="background-color: Transparent;
     background-repeat:no-repeat;
     border: none;
     cursor:pointer;
@@ -56,7 +88,16 @@
   </tbody>
 </table>
 {% else %}
-  There are currently no questions in the database. Add some by clicking the 'Add a new question' button!
+<table class="table table-light">
+  <thead >
+  </thead>
+  <tbody>
+    <tr class="spacer">
+      <td colspan="4" style="text-align: center;"> <p style="padding: 1rem; font-size: 15px; font-weight: 400; color: #416469; "> You currently have no patients <br> Add your patients by clicking the 'Add a Patient' button above </p></td>
+    </tr>
+  </tbody>
+</table>
+ 
   {% endif %}
     </div>
 

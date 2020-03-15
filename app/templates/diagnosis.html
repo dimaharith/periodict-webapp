@@ -5,7 +5,7 @@
 
     <nav class="navbar navbar-dark bg-dark static-top" style="background-color: #416469 !important; ">
         <div class="mr-auto">
-            <a href="dashboard"><i class="fa fa-chevron-left" style="font-size: 20px;color:white;"></i></a> <span style="font-size: 20px; color: white; padding-left: 10px;"> Periodontal Disease Diagnosis </span>
+            <a href="{{url_for('patientoverview',govID=patient.govID)}}"><i class="fa fa-chevron-left" style="font-size: 20px;color:white;"></i></a> <span style="font-size: 20px; color: white; padding-left: 10px;"> Periodontal Disease Diagnosis </span>
         </div>
 
     </nav>
@@ -22,7 +22,7 @@
        <span class="form-inline mr-auto fa fa-user-circle" style="color:#b9b9b9; font-size: 50px;"></span>
       </div>
      <div class="col-10">
-       <h5 class="card-title" style="color:#416469; margin-top: 10px; margin-left: 1.5em;">John Doe</h5>
+       <h5 class="card-title" style="color:#416469; margin-left: 1.5em;">{{patient.firstname}} {{patient.lastname}}</h5>
       </div>
     
                             </div>
@@ -33,26 +33,26 @@
                         <div class="col-9">
                             <div class="row" style="margin-top: 1em;">
                                 <div class="col-2 patientinfo-label">
-                                    <p> ID </p>
+                                    <p> Government ID </p>
                                     <p> Full Name </p>
                                 </div>
                               <div class="col-2 patientinfo">
-                                    <p> 1 </p>
-                                    <p> John Doe </p>
+                                    <p> {{patient.govID}} </p>
+                                    <p> {{patient.firstname}} {{patient.lastname}} </p>
                                 </div>
                                 <div class="col-2 patientinfo-label">
                                     <p> Date of birth </p>
                                     <p> Gender </p>
                                 </div>
                                  <div class="col-2 patientinfo">
-                                    <p> 9/9/1997 </p>
-                                    <p> Male </p>
+                                    <p> {{patient.DOB}} </p>
+                                    <p> {{patient.Gender}} </p>
                                 </div>
                                  <div class="col-2 patientinfo-label">
                                     <p> Type of orthodontic appliance </p>
                                 </div>
                                <div class="col-2 patientinfo">
-                                    <p> Fixed appliance </p>
+                                    <p> {{patient.OrthoType}} </p>
                                 </div>
                             </div>
 
@@ -71,8 +71,9 @@
   
     <div class="row" style="margin-top: 3em;">
         <div class="col-md-5">
+            
               <div class="card" style="width: 35em; height: 23em; margin:0 auto; margin-left: 4.5em;">
-  <img src="{{ url_for('static', filename='img/img-placeholder.png') }}" style="height: 100%; width: 100%;" alt="Card image cap">
+  <img src="{{ url_for('static', filename='img/'+assessment.info['img']) }}" style="height: 100%; width: 100%;" alt="assessment.info['img']">
 </div>
 
         </div>
@@ -92,8 +93,8 @@
                     </thead>
                     <tbody>
                         <tr class="spacer">
-                            <td colspan="2">Positive</td>
-                            <td colspan="2">Moderate</td>
+                            <td colspan="2">{{assessment.info['diagnosis']}}</td>
+                            <td colspan="2">{{assessment.info['severity']}}</td>
                         </tr>
                     </tbody>
                       <thead>
@@ -108,9 +109,9 @@
                     <tbody>
                         <tr class="spacer">
                             <td></td>
-                            <td style="text-align: center">0.79</td>
-                            <td style="text-align: center">0.56</td>
-                            <td style="text-align: center">0.32</td>
+                             {% for a in assessment.info['CF'] %}
+                            <td style="text-align: center">{{ a  }}</td>
+                            {% endfor %}
                         </tr>
                     </tbody>
                     <thead>
@@ -120,7 +121,7 @@
                     </thead>
                     <tbody>
                         <tr class="spacer">
-                            <td colspan="4">36%</td>
+                            <td colspan="4">{{assessment.info['plaque']}}</td>
                         </tr>
                     </tbody>
                 </table>

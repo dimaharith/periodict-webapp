@@ -26,29 +26,14 @@
 
 </head>
 
-     {% if pageType == 'index'  %}
+     {% if (pageType == 'index' or pageType =='forgotpassword' or pageType =='register')  %}
 <body style="overflow-y: hidden !important; background-repeat: no-repeat;
   background-size: cover;">
          <nav class="navbar navbar-dark bg-dark static-top" style="background-color: #678589 !important;">
     
     <a class="navbar-brand" href="#">
             <img src="{{ url_for('static', filename='img/PeriodictLogo.png') }}" style="width: 150px;">
-        </a>
-       
-
-
-   
-        
-    </nav>
-    {% elif pageType =='forgotpassword' %}
-    <body style="overflow-y: hidden !important ; background-color:  #f0f0f0; background-repeat: no-repeat;
-  background-size: cover;">
-                 <nav class="navbar navbar-dark bg-dark static-top" style="background-color: #678589 !important;">
-        
-            <a class="navbar-brand" href="#">
-            <img src="{{ url_for('static', filename='img/PeriodictLogo.png') }}" style="width: 150px; left: 15px;">
-        </a>
-       
+        </a>  
     </nav>
     {% else %}
     <body style="background-color: #f0f0f0 !important;">
@@ -60,10 +45,10 @@
             <img src="{{ url_for('static', filename='img/PeriodictLogo.png') }}" style="width: 150px; left: 15px;">
         </a>
         <p class="form-inline my-2 my-lg-0 ml-auto" style="color: white">
-         Dr. {{session['fullname']}} {{session['lastname']}}  <span class="form-inline my-2 my-lg-0 ml-auto fa fa-user-circle" style="font-size: 30px; padding-left: 8%"></span>   
+         Dr. {{session['fullname']}} {{session['lastname']}}  <span class="form-inline my-2 my-lg-0 ml-auto fa fa-user-circle" style="font-size: 30px; padding-left: 8%;  padding-right:2rem;"></span>   
         </p>
         
-        <button class="navbar-toggler toggler-example" type="button" data-toggle="collapse" data-target="#navbarSupportedContent1" style="color: white" aria-controls="navbarSupportedContent1" aria-expanded="false" aria-label="Toggle navigation"><span class="dark-blue-text"><i
+        <button class="navbar-toggler toggler-example" type="button" data-toggle="collapse" data-target="#navbarSupportedContent1" style="color: white;" aria-controls="navbarSupportedContent1" aria-expanded="false" aria-label="Toggle navigation"><span class="dark-blue-text"><i
         class="fas fa-bars fa-1x"></i></span></button>
 
         <!-- Collapsible content -->

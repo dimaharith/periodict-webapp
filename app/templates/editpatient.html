@@ -15,20 +15,64 @@
     </nav>
    
   
-<div class="container h-100" style="padding-top: 3%">
+<div class="container h-100" style="padding-top: 1%">
     <div class="row h-100 justify-content-center align-items-center">
         <div class="col-10 col-md-8 col-lg-6">
-            <!-- Form -->
+            {% with errors = get_flashed_messages(category_filter=["error"]) %}
+  {% if errors %}
+
+ 
+    {%- for msg in errors %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-top: 1rem; font-size: 15px; text-align: center;">
+            {{msg}}
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+    {% endfor -%}
+ 
+
+{% endif %}
+{% endwith %}
+
+    {% with success = get_flashed_messages(category_filter=["success"]) %}
+  {% if success %}
+
+ 
+    {%- for msg in success %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert" style="margin-top: 1rem; font-size: 15px; text-align: center;">
+            {{msg}}
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+    {% endfor -%}
+ 
+
+{% endif %}
+{% endwith %}
              <form class="form-example" method="POST" action="{{ url_for('updatepatient', govID=patient.govID)}}">
-                  {{ render_field(form.govID, value=patient.govID) }}
+                  <label for="govID">Government ID</label>
+      <input type="text" class="form-control" for="govID" name="govID" value="{{patient.govID}}" readonly>
                   {{ render_field(form.firstname, value=patient.firstname) }}
                   {{ render_field(form.lastname, value=patient.lastname) }}
-                  {{ render_field(form.dob, value=patient.dob) }}
+                  {{ render_field(form.dob, value=patient.DOB) }}
+                  {% if patient.Gender == 'Female' %}
                   {{ render_radio_fields(form.gender) }}
-                  {{ render_field(form.orthotype) }}
+                  {% else %}
+                  {{ render_radio_fields(form.gender, checked='checked') }}
+                  {% endif %}
+
+                  <label for="orthoType" name="orthoType" > Type of Orthodontic Appliance </label>
+                      <select class="form-control" name="orthoType">
+      <option value="No orthodontic appliance"{% if patient.OrthoType=='No orthodontic appliance' %} selected="selected"{% endif %}>No orthodontic appliance</option>
+      <option value="Clear aligners (i.e. Invisalign)"{% if patient.OrthoType=='Clear aligners (i.e. Invisalign)' %} selected="selected"{% endif %}>Clear aligners (i.e. Invisalign)</option>
+      <option value="Fixed appliance"{% if patient.OrthoType=='Fixed appliance' %} selected="selected"{% endif %}>Fixed appliance</option>
+
+          </select>
           
                 
-               <div class="col text-center">
+               <div class="col text-center" style="margin-top: 2rem;">
                  <button type="submit" class="btn btn-info btn-default" style="width:50%">Update Information</button>
         
                 </div>

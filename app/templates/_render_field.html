@@ -1,7 +1,7 @@
 {% macro render_field(field) %}
 
 <div class="form-group">
-    <label for="{{ field.name }}" name="{{ field.name }}" > {{ field.label.text }} </label>
+    <label for="{{ field.name }}" name="{{ field.name }}"> {{ field.label.text }} </label>
     {{ field(class_='form-control', **kwargs)|safe }}
         <ul>
         {% for error in field.errors %}
@@ -37,7 +37,7 @@
     {% for subfield in field %}
     <div class="radio">
         <label>
-            {{ subfield }}
+            {{ subfield(**kwargs)|safe }}
             {{ subfield.label.text }}
         </label>
     </div>
