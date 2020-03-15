@@ -10,11 +10,13 @@ from datetime import datetime
 from wtforms.fields.html5 import DateField
 from wtforms import StringField, PasswordField, TextAreaField, SubmitField, FileField, BooleanField, RadioField, SelectField
 from wtforms.validators import InputRequired, NumberRange, DataRequired
+from flask_wtf.file import FileField, FileAllowed, FileRequired
 import requests
 import sys
 import bcrypt
 from bson import json_util, ObjectId
 import json
+import re
 
 
 
@@ -60,13 +62,21 @@ class RegisterForm(FlaskForm):
 class ForgotForm(FlaskForm):
     email = StringField('E-mail', validators=[InputRequired()])
 
+class timelineForm(FlaskForm):
+    imgt0 = FileField('Before applying orthodontic appliance (T0)',validators=[ FileRequired(), FileAllowed(['jpg', 'png','jpeg','JPG','JPEG','PNG'], 'Images only!')])
+    imgt1 = FileField('One week after application (T1)',validators=[ FileRequired(), FileAllowed(['jpg', 'png','jpeg','JPG','JPEG','PNG'], 'Images only!')])
+    imgt2 = FileField('Four weeks after application (T2)',validators=[ FileRequired(), FileAllowed(['jpg', 'png','jpeg','JPG','JPEG','PNG'], 'Images only!')])
+
+class diagnosisForm(FlaskForm):
+    img = FileField('Choose an image',validators=[ FileRequired(), FileAllowed(['jpg', 'png','jpeg','JPG','JPEG','PNG'], 'Images only!')])
+
 @app.route('/')
 @app.route('/index', methods=['GET','POST'])
 def index():
     pageType = 'index'
     form = LoginForm()
 
-    if request.method == 'POST':
+    if request.method == 'POST' and form.validate_on_submit():
         users = db.users
         login_user = users.find_one({'email': request.form['email']})
 
@@ -85,7 +95,7 @@ def register():
     pageType = 'register'
     form = RegisterForm()
 
-    if request.method == 'POST':
+    if request.method == 'POST' and form.validate_on_submit():
         users = db.users
         login_user = users.find_one({'email': request.form['email']})
 
@@ -196,10 +206,12 @@ def updatepatient(govID):
 def myaccount():
     pageType = 'myaccount'
     form = AccountForm()
+    backurl = request.headers.get("Referer")
+    referrer = backurl.split('/')[3]
     users = db.users
 
     if request.method == "GET":
-        return render_template('myaccount.html', pageType=pageType, form=form, loggedEmail=session['user'])
+        return render_template('myaccount.html', pageType=pageType, form=form, loggedEmail=session['user'], referrer=referrer)
     
     if request.method == "POST":
         login_user = users.find_one({'email': session['user']})
@@ -232,66 +244,143 @@ def myaccount():
 def patientoverview(govID=None):
     pageType='patientoverview'
     patients = db.patients
-
+    timelineF = timelineForm()
+    diagnosisF = diagnosisForm()
     q = patients.find_one({ "govID": govID })
     formattedDate = datetime.strptime(q['DOB'], '%Y-%m-%d').date().strftime('%m/%d/%Y')
     patient = {'govID': q['govID'], 'firstname': q['firstname'], 'lastname': q['lastname'], 'DOB': formattedDate,
                            'Gender': q['Gender'], 'OrthoType': q['OrthoType']}
-    return render_template('patientoverview.html', pageType=pageType, patient=patient, loggedEmail = session['user'])
+    return render_template('patientoverview.html', pageType=pageType, patient=patient, loggedEmail = session['user'], timelineForm = timelineF, diagnosisForm = diagnosisF)
 
 
-@app.route('/diagnosis')
-@app.route('/diagnosis/<dID>')
-def diagnosis(dID=None):
+@app.route('/diagnosis/<govID>',methods=['GET','POST'])
+@app.route('/diagnosis/<govID>/<dID>',methods=['GET','POST'])
+def diagnosis(dID=None, govID=None):
     pageType='diagnosis'
-    oid = dID
     assessments = db.assessments
     patients = db.patients
-    dx = assessments.find_one({'_id': ObjectId(oid)})
-    q = patients.find_one({'govID':dx['govID'] })
-    formattedDate = datetime.strptime(q['DOB'], '%Y-%m-%d').date().strftime('%m/%d/%Y')
-    patient = {'govID': q['govID'], 'firstname': q['firstname'], 'lastname': q['lastname'], 'DOB': formattedDate,
-                           'Gender': q['Gender'], 'OrthoType': q['OrthoType']}
-    formattedDate = datetime.strptime(dx['date'], '%Y-%m-%d').date().strftime('%m/%d/%Y')
-    assessment = {
-        'govID': dx['govID'],
-        'date': formattedDate, 
-        'type': dx['type'],
-        'info': {
-        'diagnosis' : dx['info']['diagnosis'],
-        'severity' : dx['info']['severity'],
-        'CF':
-            {
-            dx['info']['CF']['F1'],
-            dx['info']['CF']['F2'],
-            dx['info']['CF']['F3'],
-            },
-        'plaque': dx['info']['plaque'],
-        'img' : dx['info']['img']
-        }}
+    q = patients.find_one({'govID': govID })
+    backurl = request.headers.get("Referer")
+    referrer = backurl.split('/')[3]
+   
+    formattedDate = datetime.today().strftime('%Y-%m-%d')
 
-    #diagnosis = json.loads(json_util.dumps(assessment))
+    if request.method == "GET":
+        oid = dID
+        dx = assessments.find_one({'_id': ObjectId(oid)})
+        q = patients.find_one({'govID':dx['govID'] })
+        formattedDate = datetime.strptime(q['DOB'], '%Y-%m-%d').date().strftime('%m/%d/%Y')
+        patient = {'govID': q['govID'], 'firstname': q['firstname'], 'lastname': q['lastname'], 'DOB': formattedDate,
+                               'Gender': q['Gender'], 'OrthoType': q['OrthoType']}
+        formattedDate = datetime.strptime(dx['date'], '%Y-%m-%d').date().strftime('%m/%d/%Y')
+        assessment = {
+            'govID': dx['govID'],
+            'date': formattedDate, 
+            'type': dx['type'],
+            'info': {
+            'diagnosis' : dx['info']['diagnosis'],
+            'severity' : dx['info']['severity'],
+            'CF':
+                {
+                dx['info']['CF']['F1'],
+                dx['info']['CF']['F2'],
+                dx['info']['CF']['F3'],
+                },
+            'plaque': dx['info']['plaque'],
+            'img' : dx['info']['img']
+            }}
+        #diagnosis = json.loads(json_util.dumps(assessment))
+        return render_template('diagnosis.html', pageType=pageType, assessment = assessment, patient=patient, referrer=referrer)
+   
+    if request.method == "POST":
+        new_a = {'govID': govID,
+            'date': formattedDate, 
+            'type': 'Periodontal disease diagnosis',
+            'info': {
+                'diagnosis' : 'Positive',
+                'severity' : 'Mild',
+                'CF':
+                    {
+                    'F1' : 't0 f1',
+                    'F2' : 't0 f2',
+                    'F3' : 't0 f3',
+                    },
+                'plaque': 'plaque t0',
+                'img' : request.form['img']
+                }}
 
-    return render_template('diagnosis.html', pageType=pageType, assessment = assessment, patient=patient)
+        a_id = assessments.insert(new_a)
+        #new_a = assessments.find_one({'_id': a_id})
+        return redirect(url_for('diagnosis',dID=a_id, govID=govID))
 
-@app.route('/poo')
-def poo():
-    return render_template('timeline.html')
-    
-@app.route('/timeline/<dID>')
-def timeline(dID=None):
+
+@app.route('/timeline/<govID>',methods=['GET','POST'])
+@app.route('/timeline/<govID>/<dID>',methods=['GET','POST'])
+def timeline(dID=None, govID=None):
     pageType='timeline'
-    oid = dID
     assessments = db.assessments
-    patients = db.patients
-    dx = assessments.find_one({'_id': ObjectId(oid)})
-    q = patients.find_one({'govID':dx['govID'] })
-    formattedDate = datetime.strptime(q['DOB'], '%Y-%m-%d').date().strftime('%m/%d/%Y')
-    patient = {'govID': q['govID'], 'firstname': q['firstname'], 'lastname': q['lastname'], 'DOB': formattedDate,
-                           'Gender': q['Gender'], 'OrthoType': q['OrthoType']}
-    formattedDate = datetime.strptime(dx['date'], '%Y-%m-%d').date().strftime('%m/%d/%Y')
-    comment = dx['comment']
-    assessment = [{
+    backurl = request.headers.get("Referer")
+    referrer = backurl.split('/')[3]
+    
+    formattedDate = datetime.today().strftime('%Y-%m-%d')
+    if request.method == "POST":
+        new_a = {'govID': govID,
+            'date': formattedDate, 
+            'type': 'Comparative timeline and analysis',
+            'info': [{
+                'diagnosis' : 'Positive',
+                'severity' : 'Mild',
+                'CF':
+                    {
+                    'F1' : 't0 f1',
+                    'F2' : 't0 f2',
+                    'F3' : 't0 f3',
+                    },
+                'plaque': 'plaque t0',
+                'img' : request.form['imgt0']
+                },
+                 {
+                'diagnosis' : 'Positive',
+                'severity' : 'Moderate',
+                'CF':
+                    {
+                   'F1' : 't1 f1',
+                    'F2': 't1 f2',
+                    'F3' : 't1 f3',
+                    },
+                'plaque': 'plaque t1',
+            'img' : request.form['imgt1']
+            },
+             {
+                'diagnosis' : 'Positive',
+                'severity' : 'Severe',
+            'CF':
+                    {
+                   'F1' :   't2 f1',
+                   'F2' : 't2 f2',
+                   'F3' : 't2 f3',
+                    },
+            'plaque': 'plaque t2',
+            'img' : request.form['imgt2']
+            }],
+            'comment' : 'yo patient sucks'
+            }
+
+        #json_a = jsonify(new_a)
+        a_id = assessments.insert(new_a)
+        #new_a = assessments.find_one({'_id': a_id})
+        return redirect(url_for('timeline',dID=a_id, govID=govID))
+    if request.method == "GET":
+        oid = dID
+        dx = assessments.find_one({'_id': ObjectId(oid)})
+        patients = db.patients
+        q = patients.find_one({'govID': govID })
+        formattedDate = datetime.strptime(q['DOB'], '%Y-%m-%d').date().strftime('%m/%d/%Y')
+        patient = {'govID': q['govID'], 'firstname': q['firstname'], 'lastname': q['lastname'], 'DOB': formattedDate,
+                               'Gender': q['Gender'], 'OrthoType': q['OrthoType']}
+        formattedDate = datetime.strptime(dx['date'], '%Y-%m-%d').date().strftime('%m/%d/%Y')
+        comment = dx['comment']
+        assessment = [{
                 'diagnosis' : dx['info'][0]['diagnosis'],
                 'severity' : dx['info'][0]['severity'],
                 'CF':
@@ -307,29 +396,27 @@ def timeline(dID=None):
                 'diagnosis' : dx['info'][1]['diagnosis'],
                 'severity' : dx['info'][1]['severity'],
                 'CF':
-                    {
-                    dx['info'][1]['CF']['F1'],
-                    dx['info'][1]['CF']['F2'],
-                    dx['info'][1]['CF']['F3'],
-                    },
-                'plaque': dx['info'][1]['plaque'],
-                'img' : dx['info'][1]['img']
+                {
+                dx['info'][1]['CF']['F1'],
+                dx['info'][1]['CF']['F2'],
+                dx['info'][1]['CF']['F3'],
                 },
-                 {
-                'diagnosis' : dx['info'][2]['diagnosis'],
-                'severity' : dx['info'][2]['severity'],
-                'CF':
-                    {
-                    dx['info'][2]['CF']['F1'],
-                    dx['info'][2]['CF']['F2'],
-                    dx['info'][2]['CF']['F3'],
-                    },
-                'plaque': dx['info'][2]['plaque'],
-                'img' : dx['info'][2]['img']
-                }]
-                
-            
-    return render_template('timeline.html', pageType=pageType, assessments = assessment, patient=patient, comment=comment)
+            'plaque': dx['info'][1]['plaque'],
+            'img' : dx['info'][1]['img']
+            },
+             {
+            'diagnosis' : dx['info'][2]['diagnosis'],
+            'severity' : dx['info'][2]['severity'],
+            'CF':
+                {
+                dx['info'][2]['CF']['F1'],
+                dx['info'][2]['CF']['F2'],
+                dx['info'][2]['CF']['F3'],
+                },
+            'plaque': dx['info'][2]['plaque'],
+            'img' : dx['info'][2]['img']
+            }]
+        return render_template('timeline.html', pageType=pageType, assessments = assessment, patient=patient, comment=comment, referrer=referrer)
 
 @app.route('/patienthistory/<govID>', methods=['GET'])
 def patienthistory(govID):
@@ -399,19 +486,20 @@ def patienthistory(govID):
                 'plaque': a['info'][2]['plaque']
                 }
                 ]})
+
             jsonA = json.loads(json_util.dumps(a))
             aList.append(jsonA)
 
+    sortedAssessments = sorted(
+    aList,
+    key=lambda x: datetime.strptime(x['date'], '%m/%d/%Y'), reverse=True
+    )
 
-    '''
-    x = jsonify({'result': output})
-    readAssessments = x.get('result')
-    '''
     formattedDate = datetime.strptime(q['DOB'], '%Y-%m-%d').date().strftime('%m/%d/%Y')
     patient = {'govID': q['govID'], 'firstname': q['firstname'], 'lastname': q['lastname'], 'DOB': formattedDate,
                            'Gender': q['Gender'], 'OrthoType': q['OrthoType']}
 
-    return render_template('patienthistory.html', pageType=pageType, patient=patient, assessments = aList, loggedEmail = session['user'])
+    return render_template('patienthistory.html', pageType=pageType, patient=patient, assessments = sortedAssessments, loggedEmail = session['user'])
 
 #==== API CODE ====
 @app.route('/users', methods=['GET'])
@@ -573,3 +661,172 @@ def add_question():
         }
 
     return jsonify({'result': output})
+
+@app.route('/getassessments/<govID>', methods=['GET'])
+def getassessments(govID):
+    pageType='patienthistory'
+    patients = db.patients
+    assessments = db.assessments
+    q = patients.find_one({ "govID": govID }) 
+
+    aList = []
+    for a in assessments.find({ "govID": govID }):
+        formattedDate = datetime.strptime(a['date'], '%Y-%m-%d').date().strftime('%m/%d/%Y')
+        if a['type'] == 'Periodontal disease diagnosis':
+            a = ({'_id': a['_id'], 
+                'govID': a['govID'],
+                'date': formattedDate, 
+                'type': a['type'],
+                'info': {
+                'diagnosis' : a['info']['diagnosis'],
+                'severity' : a['info']['severity'],
+                'CF':
+                    {
+                    a['info']['CF']['F1'],
+                    a['info']['CF']['F2'],
+                    a['info']['CF']['F3'],
+                    },
+                'plaque': a['info']['plaque']
+                }})
+            jsonA = json.loads(json_util.dumps(a))
+            aList.append(jsonA)
+        else:
+            a = ({'_id': a['_id'], 
+                'govID': a['govID'],
+                'date': formattedDate, 
+                'type': a['type'],
+                'info': [
+                {
+                'diagnosis' : a['info'][0]['diagnosis'],
+                'severity' : a['info'][0]['severity'],
+                'CF':
+                    {
+                    a['info'][0]['CF']['F1'],
+                    a['info'][0]['CF']['F2'],
+                    a['info'][0]['CF']['F3'],
+                    },
+                'plaque': a['info'][0]['plaque']
+                },
+                 {
+                'diagnosis' : a['info'][1]['diagnosis'],
+                'severity' : a['info'][1]['severity'],
+                'CF':
+                    {
+                    a['info'][1]['CF']['F1'],
+                    a['info'][1]['CF']['F2'],
+                    a['info'][1]['CF']['F3'],
+                    },
+                'plaque': a['info'][1]['plaque']
+                },
+                 {
+                'diagnosis' : a['info'][2]['diagnosis'],
+                'severity' : a['info'][2]['severity'],
+                'CF':
+                    {
+                    a['info'][2]['CF']['F1'],
+                    a['info'][2]['CF']['F2'],
+                    a['info'][2]['CF']['F3'],
+                    },
+                'plaque': a['info'][2]['plaque']
+                }
+                ]})
+
+            jsonA = json.loads(json_util.dumps(a))
+            aList.append(jsonA)
+
+    sortedAssessments = sorted(
+    aList,
+    key=lambda x: datetime.strptime(x['date'], '%m/%d/%Y'), reverse=True
+    )
+
+    return jsonify({'result': sortedAssessments})
+
+@app.route('/assessmentspag/<govID>', methods=['GET'])
+def assessmentspag(govID):
+    assessments = db.assessments
+    offset = int(request.args['offset'])
+    limit = int(request.args['limit'])
+
+    starting_id = assessments.find().sort('_id', pymongo.ASCENDING)
+    last_id = starting_id[offset]['_id']
+    assessments = assessments.find({'_id' : {'$gte' : last_id}, 'govID': govID}).sort('_id', pymongo.ASCENDING).limit(limit)
+    
+    output = []
+    count = 0
+    for a in assessments:
+        count +=1
+        formattedDate = datetime.strptime(a['date'], '%Y-%m-%d').date().strftime('%m/%d/%Y')
+        if a['type'] == 'Periodontal disease diagnosis':
+            a = ({'_id': a['_id'], 
+                'govID': a['govID'],
+                'date': formattedDate, 
+                'type': a['type'],
+                'info': {
+                'diagnosis' : a['info']['diagnosis'],
+                'severity' : a['info']['severity'],
+                'CF':
+                    {
+                    a['info']['CF']['F1'],
+                    a['info']['CF']['F2'],
+                    a['info']['CF']['F3'],
+                    },
+                'plaque': a['info']['plaque']
+                }})
+        else:
+            a = ({'_id': a['_id'], 
+                'govID': a['govID'],
+                'date': formattedDate, 
+                'type': a['type'],
+                'info': [
+                {
+                'diagnosis' : a['info'][0]['diagnosis'],
+                'severity' : a['info'][0]['severity'],
+                'CF':
+                    {
+                    a['info'][0]['CF']['F1'],
+                    a['info'][0]['CF']['F2'],
+                    a['info'][0]['CF']['F3'],
+                    },
+                'plaque': a['info'][0]['plaque']
+                },
+                 {
+                'diagnosis' : a['info'][1]['diagnosis'],
+                'severity' : a['info'][1]['severity'],
+                'CF':
+                    {
+                    a['info'][1]['CF']['F1'],
+                    a['info'][1]['CF']['F2'],
+                    a['info'][1]['CF']['F3'],
+                    },
+                'plaque': a['info'][1]['plaque']
+                },
+                 {
+                'diagnosis' : a['info'][2]['diagnosis'],
+                'severity' : a['info'][2]['severity'],
+                'CF':
+                    {
+                    a['info'][2]['CF']['F1'],
+                    a['info'][2]['CF']['F2'],
+                    a['info'][2]['CF']['F3'],
+                    },
+                'plaque': a['info'][2]['plaque']
+                }
+                ]})
+
+        jsonA = json.loads(json_util.dumps(a))
+        output.append(jsonA)
+
+    if offset-limit < 0:
+        prevoffset = 0
+    else:
+        prevoffset = offset-limit
+
+    if offset+limit > count:
+        nextoffset = count
+    else:
+        nextoffset = offset+limit
+
+    next_url = '/assessmentspag/'+govID+'?limit='+str(limit)+'&offset='+str(nextoffset)  
+    prev_url =  '/assessmentspag/'+govID+'?limit='+str(limit)+'&offset='+str(prevoffset)  
+    return jsonify({ 'prev_url':prev_url, 'next_url': next_url, 'result' : output})
+    

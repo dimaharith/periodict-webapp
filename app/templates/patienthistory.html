@@ -80,9 +80,9 @@
       </td>
       <td>
         {% if assessment.type == 'Periodontal disease diagnosis' %}
-        <a href="{{ url_for('diagnosis', dID=assessment._id['$oid'])}}"><i class="fa fa-chevron-right" style="font-size: 20px;color:#678589;"></i></a>
+        <a href="{{ url_for('diagnosis', dID=assessment._id['$oid'], govID=patient.govID)}}"><i class="fa fa-chevron-right" style="font-size: 20px;color:#678589;"></i></a>
         {% else %}
-        <a href="{{ url_for('timeline', dID=assessment._id['$oid'])}}"><i class="fa fa-chevron-right" style="font-size: 20px;color:#678589;"></i></a>
+        <a href="{{ url_for('timeline', dID=assessment._id['$oid'], govID=patient.govID)}}"><i class="fa fa-chevron-right" style="font-size: 20px;color:#678589;"></i></a>
         {% endif %}
       </td>
     </tr>  

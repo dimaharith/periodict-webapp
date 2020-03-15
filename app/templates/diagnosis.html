@@ -5,7 +5,7 @@
 
     <nav class="navbar navbar-dark bg-dark static-top" style="background-color: #416469 !important; ">
         <div class="mr-auto">
-            <a href="{{url_for('patientoverview',govID=patient.govID)}}"><i class="fa fa-chevron-left" style="font-size: 20px;color:white;"></i></a> <span style="font-size: 20px; color: white; padding-left: 10px;"> Periodontal Disease Diagnosis </span>
+            <a href="{{url_for(referrer,govID=patient.govID)}}"><i class="fa fa-chevron-left" style="font-size: 20px;color:white;"></i></a> <span style="font-size: 20px; color: white; padding-left: 10px;"> Periodontal Disease Diagnosis </span>
         </div>
 
     </nav>
@@ -132,7 +132,7 @@
     </div>
   
     <div class="row">
-    <button class="btn btn-info ml-auto" style="margin-right: 7em; width: 10%" type="button"> Done </button>
+    <button class="btn btn-info ml-auto" onclick="location.href = '{{ url_for(referrer, govID=patient.govID)}}';" style="margin-right: 7em; width: 10%" type="button" > Done </button>
     </div>
     <!-- Diagnosis Info END -->
     <!-- Footer -->
