@@ -44,6 +44,11 @@
         <a class="navbar-brand" href="#">
             <img src="{{ url_for('static', filename='img/PeriodictLogo.png') }}" style="width: 150px; left: 15px;">
         </a>
+        <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+        <a class="nav-link" style="color: white" href="{{url_for('dashboard')}}">My Dashboard</a>
+      </li>
+  </ul>
         <p class="form-inline my-2 my-lg-0 ml-auto" style="color: white">
          Dr. {{session['fullname']}} {{session['lastname']}}  <span class="form-inline my-2 my-lg-0 ml-auto fa fa-user-circle" style="font-size: 30px; padding-left: 8%;  padding-right:2rem;"></span>   
         </p>

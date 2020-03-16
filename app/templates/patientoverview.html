@@ -55,15 +55,15 @@
       </div>
       </div>
       <div class="col text-center">
-   <button type="button" class="btn btn-outline-info btn-sm" onclick="location.href = '{{ url_for('patienthistory', govID=patient.govID)}}';" style="margin: 5px;"> View patient history </button>
-      
+       
+   <button type="button" class="btn btn-outline-info btn-sm" onclick="location.href = '{{ url_for('patienthistory', govID=patient.govID, offset=0)}}';" style="margin: 5px;"> View patient history </button>
+     
    </div>
          
   </div>
  
   <div class="col text-center">
  <button type="button" class="btn btn-outline-danger btn-sm" style="margin: 5px; margin-bottom: 3em;" data-toggle="modal" data-target="#deleteModal"> Delete Patient</button>
-      <!-- onclick="location.href = '{{ url_for('patienthistory', govID=patient.govID)}}';" -->
    </div>
 {% with errors = get_flashed_messages(category_filter=["error"]) %}
   {% if errors %}

@@ -69,6 +69,7 @@
       <th scope="col">Date</th>
       <th scope="col">Type</th>
     <th scope="col"></th>
+    <th scope="col"></th>
     </tr>
   </thead>
   {% if assessments %}
@@ -85,6 +86,9 @@
         <a href="{{ url_for('timeline', dID=assessment._id['$oid'], govID=patient.govID)}}"><i class="fa fa-chevron-right" style="font-size: 20px;color:#678589;"></i></a>
         {% endif %}
       </td>
+      <td>
+    <a href="{{ url_for('timeline', dID=assessment._id['$oid'], govID=patient.govID)}}"><i class="far fa-trash-alt" style="font-size: 20px;color:#678589;">
+      </td>
     </tr>  
      {% endfor %}
   </tbody>
@@ -96,9 +100,20 @@
     </tr>
   {% endif %}
 </table>
+<div style="margin-left: 0.5rem;">
+  {% if showPrev !='no'%}
+<button type="button" onclick="location.href = '{{ url_for('patienthistory', govID=patient.govID, offset=prevOffset)}}';" class="btn btn-outline-secondary">
+    <span class="fa fa-chevron-left">   </span>
+  </button>
+    {% endif %}
+  {% if showNext !='no'%}
+                <button type="button" onclick="location.href = '{{ url_for('patienthistory', govID=patient.govID, offset=nextOffset)}}';" class="btn btn-outline-secondary" >
+                    <span class="fa fa-chevron-right">  </span>
+                </button>
+                 {% endif %}
     </div>
     
-     
+     </div>
      
      
      

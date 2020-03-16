@@ -418,8 +418,37 @@ def timeline(dID=None, govID=None):
             }]
         return render_template('timeline.html', pageType=pageType, assessments = assessment, patient=patient, comment=comment, referrer=referrer)
 
-@app.route('/patienthistory/<govID>', methods=['GET'])
-def patienthistory(govID):
+
+@app.route('/patienthistory/<govID>/<offset>', methods=['GET'])
+def patienthistory(govID, offset):
+    pageType='patienthistory'
+    patients = db.patients
+    assessments = db.assessments
+    q = patients.find_one({ "govID": govID }) 
+    formattedDate = datetime.strptime(q['DOB'], '%Y-%m-%d').date().strftime('%m/%d/%Y')
+    patient = {'govID': q['govID'], 'firstname': q['firstname'], 'lastname': q['lastname'], 'DOB': formattedDate,
+                           'Gender': q['Gender'], 'OrthoType': q['OrthoType']}
+    
+    count = assessments.find({'govID': govID}).count()
+    if count != 0:
+        url = 'http://127.0.0.1:5000/assessments/'+govID+'/'+offset
+        aList = requests.get(url).json()
+        nextOffset = aList['next_url'] 
+        prevOffset = aList['prev_url'] 
+        showPrev = aList['showPrev']
+        showNext = aList['showNext']
+        '''
+        sortedAssessments = sorted(
+        aList['result'],
+        key=lambda x: datetime.strptime(x['date'], '%m/%d/%Y'), reverse=True
+        )
+        '''
+        return render_template('patienthistory.html', showPrev=showPrev, showNext=showNext, prevOffset=prevOffset, nextOffset=nextOffset, pageType=pageType, patient=patient, assessments=aList['result'], loggedEmail = session['user'])
+    else:
+        return render_template('patienthistory.html', pageType=pageType, patient=patient, assessments=[], loggedEmail = session['user'])
+'''
+@app.route('/patienthistory2/<govID>', methods=['GET'])
+def patienthistory2(govID):
     pageType='patienthistory'
     patients = db.patients
     assessments = db.assessments
@@ -500,7 +529,7 @@ def patienthistory(govID):
                            'Gender': q['Gender'], 'OrthoType': q['OrthoType']}
 
     return render_template('patienthistory.html', pageType=pageType, patient=patient, assessments = sortedAssessments, loggedEmail = session['user'])
-
+'''
 #==== API CODE ====
 @app.route('/users', methods=['GET'])
 def get_all_users():
@@ -741,20 +770,20 @@ def getassessments(govID):
 
     return jsonify({'result': sortedAssessments})
 
-@app.route('/assessmentspag/<govID>', methods=['GET'])
-def assessmentspag(govID):
+@app.route('/assessments/<govID>/<offset>', methods=['GET'])
+def assessmentspag(govID, offset):
     assessments = db.assessments
-    offset = int(request.args['offset'])
-    limit = int(request.args['limit'])
+    offset = int(offset)
+    limit = 6
+    count = assessments.find({'govID': govID}).count()
 
-    starting_id = assessments.find().sort('_id', pymongo.ASCENDING)
+    starting_id = assessments.find().sort('_id', -1)
     last_id = starting_id[offset]['_id']
-    assessments = assessments.find({'_id' : {'$gte' : last_id}, 'govID': govID}).sort('_id', pymongo.ASCENDING).limit(limit)
+    assessments = assessments.find({'_id' : {'$lte' : last_id}, 'govID': govID}).sort('_id', -1).limit(limit)
     
     output = []
-    count = 0
+
     for a in assessments:
-        count +=1
         formattedDate = datetime.strptime(a['date'], '%Y-%m-%d').date().strftime('%m/%d/%Y')
         if a['type'] == 'Periodontal disease diagnosis':
             a = ({'_id': a['_id'], 
@@ -816,17 +845,22 @@ def assessmentspag(govID):
         jsonA = json.loads(json_util.dumps(a))
         output.append(jsonA)
 
+    sortedAssessments = sorted(
+        output,
+        key=lambda x: datetime.strptime(x['date'], '%m/%d/%Y'), reverse=True
+        )
+
     if offset-limit < 0:
-        prevoffset = 0
+        showPrev = 'no'
     else:
-        prevoffset = offset-limit
+        showPrev = 'yes'
 
     if offset+limit > count:
-        nextoffset = count
+        showNext = 'no'
     else:
-        nextoffset = offset+limit
+        showNext = 'yes'
 
-    next_url = '/assessmentspag/'+govID+'?limit='+str(limit)+'&offset='+str(nextoffset)  
-    prev_url =  '/assessmentspag/'+govID+'?limit='+str(limit)+'&offset='+str(prevoffset)  
-    return jsonify({ 'prev_url':prev_url, 'next_url': next_url, 'result' : output})
+    next_url = '/assessments/'+govID+'/'+str(offset+limit)  
+    prev_url =  '/assessments/'+govID+'/'+str(offset-limit)  
+    return jsonify({'showPrev': showPrev, 'showNext': showNext, 'prev_url':str(offset-limit), 'next_url': str(offset+limit), 'result' : sortedAssessments})
     
