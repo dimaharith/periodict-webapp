@@ -11,6 +11,7 @@
       
 
     </nav>
+      
 
   <div class="row" style="margin-top: 3em;">
   <div class="col-md-5">
@@ -37,8 +38,8 @@
       </div>
       </div>
      <div class="row" style="margin-top: 3em;">
-       <div class="col-6 patientinfo">
-            <p>ID</p>
+       <div class="col-6 patientinfo" style="color: ">
+            <p>Government ID</p>
            <p>Full name</p>
            <p>Date of Birth</p>
            <p>Gender</p>
@@ -75,6 +76,7 @@
   {% if assessments %}
   <tbody>
      {% for assessment in assessments %}
+
     <tr class="spacer">
       <td>{{assessment.date}}</td>
       <td>{{assessment.type}}
@@ -87,20 +89,23 @@
         {% endif %}
       </td>
       <td>
-    <a href="{{ url_for('timeline', dID=assessment._id['$oid'], govID=patient.govID)}}"><i class="far fa-trash-alt" style="font-size: 20px;color:#678589;">
+    <a href="{{ url_for('deleteassessment',govID=patient.govID, dID=assessment._id['$oid'])}}"><i class="far fa-trash-alt" style="font-size: 20px;color:#678589;">
       </td>
     </tr>  
      {% endfor %}
   </tbody>
   {% else %}
   <tr class="spacer">
-  <td colspan="3">No assessments have been made for this patient. Head to patient overview to get started.
+  <td colspan="4">No assessments have been made for this patient. Head to patient overview to get started.
       </td>
    
     </tr>
   {% endif %}
 </table>
-<div style="margin-left: 0.5rem;">
+
+
+  {% if assessments %}
+  <div style="margin-left: 0.5rem;">
   {% if showPrev !='no'%}
 <button type="button" onclick="location.href = '{{ url_for('patienthistory', govID=patient.govID, offset=prevOffset)}}';" class="btn btn-outline-secondary">
     <span class="fa fa-chevron-left">   </span>
@@ -111,10 +116,47 @@
                     <span class="fa fa-chevron-right">  </span>
                 </button>
                  {% endif %}
-    </div>
+                  </div>
+                 {% endif %}
+{% with errors = get_flashed_messages(category_filter=["error"]) %}
+  {% if errors %}
+
+ 
+    {%- for msg in errors %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-top: 1rem; font-size: 15px; text-align: center;">
+            {{msg}}
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+    {% endfor -%}
+ 
+
+{% endif %}
+{% endwith %}
+
+    {% with success = get_flashed_messages(category_filter=["success"]) %}
+  {% if success %}
+
+ 
+    {%- for msg in success %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert" style="margin-top: 1rem; font-size: 15px; text-align: center;">
+            {{msg}}
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+    {% endfor -%}
+ 
+
+{% endif %}
+{% endwith %}
+
+
+   
     
      </div>
-     
+  
      
      
      </div>
@@ -123,3 +165,7 @@
 
 </body>
 {% endblock %}
+
+    <div class="container" style="width: 50rem;">
+    
+</div>

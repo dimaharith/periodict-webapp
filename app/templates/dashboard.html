@@ -12,9 +12,9 @@
          <span style="font-size: 20px; color: white; padding-left: 10px;"> My Patients </span>
         <button type="button" class="btn btn-info ml-auto"  onclick="location.href = '{{ url_for('addpatient')}}';">Add a patient</button>
 
-        <form class="form-inline my-2 my-lg-0">
-            <input class="form-control mr-sm-2" style="margin-left: 10px" type="search" placeholder="Search" aria-label="Search">
-            <button type="button" class="btn btn-outline-light">Search</button>
+        <form class="form-inline my-2 my-lg-0" action="" method="POST">
+            <input id="search" class="form-control mr-sm-2" style="margin-left: 10px" type="search" placeholder="First name or last name" aria-label="Search" name="search">
+            <button type="submit" class="btn btn-outline-light">Search</button>
         </form>
     </nav>
     
@@ -34,7 +34,22 @@
 
 {% endif %}
 {% endwith %}
+    {% with warnings = get_flashed_messages(category_filter=["warning"]) %}
+  {% if warnings %}
 
+ 
+    {%- for msg in warnings %}
+                <div class="alert alert-warning alert-dismissible fade show" role="alert" style="margin-top: 1rem; font-size: 15px; text-align: center;">
+            {{msg}}
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+    {% endfor -%}
+ 
+
+{% endif %}
+{% endwith %}
     {% with success = get_flashed_messages(category_filter=["success"]) %}
   {% if success %}
 
@@ -68,7 +83,7 @@
     {% for patient in patients %}
     <form id="form" action="{{url_for('patientoverview', govID=patient['govID'])}}" method="POST">
     <tr class="spacer">
-      <th scope="row">{{ loop.index }}</th>
+      <th scope="row" style="color: #416469;">{{ loop.index+offset }}</th>
       <td>{{ patient['firstname'] }}</td>
       <td>{{ patient['lastname'] }}</td>
       <td>
@@ -96,9 +111,22 @@
       <td colspan="4" style="text-align: center;"> <p style="padding: 1rem; font-size: 15px; font-weight: 400; color: #416469; "> You currently have no patients <br> Add your patients by clicking the 'Add a Patient' button above </p></td>
     </tr>
   </tbody>
+    {% endif %}
 </table>
- 
-  {% endif %}
+<div style="margin-left: 0.5rem;">
+  {% if patients %}
+  {% if showPrev !='no'%}
+<button type="button" onclick="location.href = '{{ url_for('dashboard', offset=prevOffset)}}';" class="btn btn-outline-secondary">
+    <span class="fa fa-chevron-left">   </span>
+  </button>
+    {% endif %}
+  {% if showNext !='no'%}
+                <button type="button" onclick="location.href = '{{ url_for('dashboard', offset=nextOffset)}}';" class="btn btn-outline-secondary" >
+                    <span class="fa fa-chevron-right">  </span>
+                </button>
+                 {% endif %}
+                 {% endif %}
+    </div>
     </div>
 
 </body>

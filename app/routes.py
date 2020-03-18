@@ -1,7 +1,7 @@
 from flask import Flask, render_template, url_for, request, session, redirect, flash
 from app import app
 from flask import Flask
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, make_response
 from flask_pymongo import pymongo
 from flask_restful import Resource, Api
 from flask_cors import CORS
@@ -17,13 +17,53 @@ import bcrypt
 from bson import json_util, ObjectId
 import json
 import re
-
-
+from flask_login import LoginManager, current_user, login_user, login_required, logout_user
 
 app.config['JSON_SORT_KEYS'] = False
+app.config['TESTING'] = True
 CONNECTION_STRING = "mongodb+srv://dima:berryjuice09@perio-cluster-80lad.mongodb.net/test?retryWrites=true&w=majority"
 client = pymongo.MongoClient(CONNECTION_STRING)
 db = client.get_database('perio-test')
+assessments = db.assessments
+users = db.users
+patients = db.patients
+
+class User:
+    def __init__(self, email, fullname):
+        self.email = email
+        self.fullname = fullname
+
+    @staticmethod
+    def is_authenticated():
+        return True
+
+    @staticmethod
+    def is_active():
+        return True
+
+    @staticmethod
+    def is_anonymous():
+        return False
+
+    def get_id(self):
+        return self.email
+
+    @staticmethod
+    def check_password(password_hash, password):
+        return check_password_hash(password_hash, password)
+
+login_manager = LoginManager(app)
+@login_manager.user_loader
+def load_user(email):
+    u = db.users.find_one({"email": email})
+    if not u:
+        return None
+    return User(email=u['email'], fullname=u['fullname'])
+
+login_manager.init_app(app)
+login_manager.login_view = 'index'
+
+
 
 class LoginForm(FlaskForm):
     email = StringField('E-mail', validators=[InputRequired()])
@@ -62,6 +102,9 @@ class RegisterForm(FlaskForm):
 class ForgotForm(FlaskForm):
     email = StringField('E-mail', validators=[InputRequired()])
 
+class searchForm(FlaskForm):
+    search = StringField('First name or last name', validators=[InputRequired()])
+
 class timelineForm(FlaskForm):
     imgt0 = FileField('Before applying orthodontic appliance (T0)',validators=[ FileRequired(), FileAllowed(['jpg', 'png','jpeg','JPG','JPEG','PNG'], 'Images only!')])
     imgt1 = FileField('One week after application (T1)',validators=[ FileRequired(), FileAllowed(['jpg', 'png','jpeg','JPG','JPEG','PNG'], 'Images only!')])
@@ -70,25 +113,36 @@ class timelineForm(FlaskForm):
 class diagnosisForm(FlaskForm):
     img = FileField('Choose an image',validators=[ FileRequired(), FileAllowed(['jpg', 'png','jpeg','JPG','JPEG','PNG'], 'Images only!')])
 
+@app.after_request
+def after_request(response):
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, post-check=0, pre-check=0"
+    return response
+
 @app.route('/')
-@app.route('/index', methods=['GET','POST'])
+@app.route('/index', methods=['GET', 'POST'])
 def index():
-    pageType = 'index'
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard', offset=0))
+    pageType='index'
     form = LoginForm()
-
-    if request.method == 'POST' and form.validate_on_submit():
-        users = db.users
-        login_user = users.find_one({'email': request.form['email']})
-
-        if login_user and bcrypt.hashpw(request.form['password'].encode('utf-8'), login_user['password']) == login_user['password']:
-            session['user'] = request.form['email']
-            session['fullname'] = login_user['fullname']
-            return redirect(url_for('dashboard'))
+    if form.validate_on_submit():
+        user = db.users.find_one({"email": form.email.data})
+        if user and bcrypt.hashpw(request.form['password'].encode('utf-8'), user['password']) == user['password']:
+            user_obj = User(email=user['email'], fullname=user['fullname'])
+            login_user(user_obj)
+            next_page = request.args.get('next')
+            if not next_page or url_parse(next_page).netloc != '':
+                next_page = url_for('dashboard', offset=0)
+            return redirect(next_page)
         else:
             flash('Incorrect email/password')
-            return redirect(url_for('index'))
-
     return render_template('index.html', pageType=pageType, form=form)
+
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
 
 @app.route('/register', methods=['GET','POST'])
 def register():
@@ -96,10 +150,9 @@ def register():
     form = RegisterForm()
 
     if request.method == 'POST' and form.validate_on_submit():
-        users = db.users
-        login_user = users.find_one({'email': request.form['email']})
+        p_user = users.find_one({'email': request.form['email']})
 
-        if login_user:
+        if p_user:
             flash('An account with this email already exists','error')
             return redirect(url_for('register'))
         elif request.form['password']!=request.form['confirmPassword']:
@@ -109,18 +162,14 @@ def register():
             hashpass = bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt())
             url = 'http://127.0.0.1:5000/users'
             users.insert({'email' : request.form['email'], 'password' : hashpass, 'fullname': request.form['fullname']})
-            session['user'] = request.form['email']
-            session['fullname'] = request.form['fullname']
-            return redirect(url_for('dashboard'))
+            user_obj = User(email=request.form['email'], fullname=request.form['fullname'])
+            login_user(user_obj)
+            next_page = request.args.get('next')
+            if not next_page or url_parse(next_page).netloc != '':
+                next_page = url_for('dashboard', offset=0)
+            return redirect(next_page)
 
     return render_template('register.html', pageType=pageType, form=form)
-
-@app.route('/logout')
-def logout():
-   # remove the username from the session if it is there
-   session.pop('user', None)
-   session.pop('fullname', None)
-   return redirect(url_for('index'))
 
 @app.route('/forgotpassword')
 def forgotpassword():
@@ -128,22 +177,53 @@ def forgotpassword():
     pageType = 'forgotpassword'
     return render_template('forgotpassword.html', pageType=pageType, form=form)
 
-@app.route('/dashboard', methods=['GET'])
-def dashboard():
+@app.route('/dashboard/<offset>', methods=['GET','POST'])
+@login_required
+def dashboard(offset):
     pageType = 'dashboard'
-    patients = db.patients
-    if 'user' in session:
-        r = requests.get('http://127.0.0.1:5000/mypatients/'+session['user']).json()
-        patientlist = r.get('result')
-        return render_template('dashboard.html', pageType = pageType, patients=patientlist, fullname = session['fullname'], loggedEmail = session['user'])
-    return 'You are not logged in!'
+    if request.method == "GET":
+        count = patients.find({'dentistemail': current_user.email}).count()
+        if count != 0:
+            url = 'http://127.0.0.1:5000/patients/'+current_user.email+'/'+offset
+            patientList = requests.get(url).json()
+            nextOffset = patientList['next_url'] 
+            prevOffset = patientList['prev_url'] 
+            showPrev = patientList['showPrev']
+            showNext = patientList['showNext']
+
+            resp = make_response(render_template('dashboard.html', showPrev=showPrev, showNext=showNext, prevOffset=prevOffset, nextOffset=nextOffset, pageType=pageType, patients=patientList['result'], offset=int(offset)))
+            resp.headers.add('Cache-Control', 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0') 
+            return resp
+        else:
+            return render_template('dashboard.html', pageType=pageType, patients=[])
+
+    if request.method == "POST":
+        if request.form['search'] != "":
+            count = patients.find({"$and": [{"dentistemail": current_user.email}, {"$or": [{"firstname": re.compile(request.form['search'], re.IGNORECASE)}, {"lastname": re.compile(request.form['search'], re.IGNORECASE)}]}]}).count()
+            if count != 0:
+                url = 'http://127.0.0.1:5000/patientssearch/'+current_user.email+'/'+request.form['search']+'/'+offset
+                SpatientList = requests.get(url).json()
+                SnextOffset = SpatientList['next_url'] 
+                SprevOffset = SpatientList['prev_url'] 
+                SshowPrev = SpatientList['showPrev']
+                SshowNext = SpatientList['showNext']
+
+                resp = make_response(render_template('dashboard.html', showPrev=SshowPrev, showNext=SshowNext, prevOffset=SprevOffset, nextOffset=SnextOffset, pageType=pageType, patients=SpatientList['result'], offset=int(offset)))
+                resp.headers.add('Cache-Control', 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0') 
+                return resp
+            else:
+                flash(u'No results found', 'warning')
+                return redirect(url_for('dashboard', offset=0))
+        else:
+            return redirect(url_for('dashboard', offset=0))
+
 
 @app.route('/addpatient',methods=['POST','GET'])
+@login_required
 def addpatient():
     pageType = 'addpatient'
     form = addForm()
     url = 'http://127.0.0.1:5000/postpatient'
-    patients = db.patients
 
     if request.method == "POST":
         q = patients.find_one({ "govID": request.form['govID'] })
@@ -152,37 +232,48 @@ def addpatient():
             genderValue = dict(form.gender.choices).get(form.gender.data)
             dobValue = form.dob.data.strftime('%Y-%m-%d')
             patient = {'govID': request.form['govID'], 'firstname': request.form['firstname'], 'lastname': request.form['lastname'], 'DOB': dobValue,
-                               'Gender': genderValue, 'OrthoType': orthoValue, 'dentistemail': session['user']}
-            resp = requests.post(url, json = patient)
+                               'Gender': genderValue, 'OrthoType': orthoValue, 'dentistemail': current_user.email}
+            response = requests.post(url, json = patient)
             flash(u'Successfully added patient', 'success')
-            return render_template('addpatient.html', pageType=pageType, form=form)
+            render_template('addpatient.html', pageType=pageType, form=form)
         else:
             flash(u'A patient with this government ID already exists', 'error')
-            return render_template('addpatient.html', pageType=pageType, form=form)
+            render_template('addpatient.html', pageType=pageType, form=form)
 
+            
     return render_template('addpatient.html', pageType=pageType, form=form)
 
-@app.route('/deletepatient/<govID>',methods=['GET','POST'])
-def deletepatient(govID):
-    patients = db.patients
+@app.route('/deleteassessment/<govID>/<dID>',methods=['GET','POST'])
+@login_required
+def deleteassessment(govID, dID):
+    delResult = assessments.delete_one({'_id': ObjectId(dID)})
+    if delResult.deleted_count != 0:
+        flash('Assessment deleted successfully','success')
+        return redirect(url_for('patienthistory', govID=govID, offset=0))
+    else:
+        flash('Woops! Could not delete assessment...', 'error')
+        return redirect(url_for('patienthistory', govID=govID, offset=0))
 
+@app.route('/deletepatient/<govID>',methods=['GET','POST'])
+@login_required
+def deletepatient(govID):
     if request.form['govIDToConfirm'] == govID:
         govIDToDelete = govID
         toDelete = { "govID": govIDToDelete }
         delResult = patients.delete_one(toDelete)
         if delResult.deleted_count != 0:
             flash('Patient deleted successfully','success')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('dashboard', offset=0))
     else:
         flash('Could not delete patient, please make sure the entered government ID is correct', 'error')
         return redirect(url_for('patientoverview',govID=govID))
 
 
 @app.route('/updatepatient/<govID>',methods=['GET','POST'])
+@login_required
 def updatepatient(govID):
     pageType='updatepatient'
     form = editForm()
-    patients = db.patients
     url = 'http://127.0.0.1:5000/putpatient/'+govID
     q = patients.find_one({ "govID": govID })
     patient = {'govID': q['govID'], 'firstname': q['firstname'], 'lastname': q['lastname'], 'DOB': q['DOB'],
@@ -192,35 +283,32 @@ def updatepatient(govID):
                         
     if request.method == "POST":
         orthoValue = request.form.get('orthoType')
-        #orthoValue = dict(form.orthotype.choices).get(form.orthotype.data)
         genderValue = dict(form.gender.choices).get(form.gender.data)
         dobValue = form.dob.data.strftime('%Y-%m-%d')
         patient = {'govID': request.form['govID'], 'firstname': request.form['firstname'], 'lastname': request.form['lastname'], 'DOB': dobValue,
-                           'Gender': genderValue, 'OrthoType': orthoValue, 'dentistemail': session['user']}
+                           'Gender': genderValue, 'OrthoType': orthoValue, 'dentistemail': current_user.email}
         resp = requests.put(url, json = patient)
         flash(u'Successfully applied changes', 'success')
         return render_template('editpatient.html', pageType=pageType, form=form, patient=patient)
 
    
 @app.route('/myaccount', methods=['GET','POST'])
+@login_required
 def myaccount():
     pageType = 'myaccount'
     form = AccountForm()
-    backurl = request.headers.get("Referer")
-    referrer = backurl.split('/')[3]
-    users = db.users
 
     if request.method == "GET":
-        return render_template('myaccount.html', pageType=pageType, form=form, loggedEmail=session['user'], referrer=referrer)
+        return render_template('myaccount.html', pageType=pageType, form=form)
     
     if request.method == "POST":
-        login_user = users.find_one({'email': session['user']})
-        toUpdate = {'email': session['user']}
+        login_user = users.find_one({'email': current_user.email})
+        toUpdate = {'email': current_user.email}
 
         if request.form['newPassword'] == "" or request.form['confirmPassword'] == "" :
             updatedUser = { "$set": {'fullname': request.form['fullname']}}
             users.update_one(toUpdate, updatedUser)
-            session['fullname'] = request.form['fullname']
+            current_user.fullname = request.form['fullname']
             flash(u'Successfully changed full name', 'success')
             return redirect(url_for('myaccount'))
         else:
@@ -241,24 +329,26 @@ def myaccount():
 
 @app.route('/patientoverview')
 @app.route('/patientoverview/<govID>', methods=['GET', 'POST'])
+@login_required
 def patientoverview(govID=None):
     pageType='patientoverview'
-    patients = db.patients
     timelineF = timelineForm()
     diagnosisF = diagnosisForm()
+    backurl = request.headers.get("Referer")
+    global offset
+    offset = backurl.split('/')[4]
     q = patients.find_one({ "govID": govID })
     formattedDate = datetime.strptime(q['DOB'], '%Y-%m-%d').date().strftime('%m/%d/%Y')
     patient = {'govID': q['govID'], 'firstname': q['firstname'], 'lastname': q['lastname'], 'DOB': formattedDate,
                            'Gender': q['Gender'], 'OrthoType': q['OrthoType']}
-    return render_template('patientoverview.html', pageType=pageType, patient=patient, loggedEmail = session['user'], timelineForm = timelineF, diagnosisForm = diagnosisF)
+    return render_template('patientoverview.html', pageType=pageType, patient=patient, timelineForm = timelineF, diagnosisForm = diagnosisF, offset=offset)
 
 
 @app.route('/diagnosis/<govID>',methods=['GET','POST'])
 @app.route('/diagnosis/<govID>/<dID>',methods=['GET','POST'])
+@login_required
 def diagnosis(dID=None, govID=None):
     pageType='diagnosis'
-    assessments = db.assessments
-    patients = db.patients
     q = patients.find_one({'govID': govID })
     backurl = request.headers.get("Referer")
     referrer = backurl.split('/')[3]
@@ -289,7 +379,7 @@ def diagnosis(dID=None, govID=None):
             'plaque': dx['info']['plaque'],
             'img' : dx['info']['img']
             }}
-        #diagnosis = json.loads(json_util.dumps(assessment))
+
         return render_template('diagnosis.html', pageType=pageType, assessment = assessment, patient=patient, referrer=referrer)
    
     if request.method == "POST":
@@ -310,15 +400,14 @@ def diagnosis(dID=None, govID=None):
                 }}
 
         a_id = assessments.insert(new_a)
-        #new_a = assessments.find_one({'_id': a_id})
         return redirect(url_for('diagnosis',dID=a_id, govID=govID))
 
 
 @app.route('/timeline/<govID>',methods=['GET','POST'])
 @app.route('/timeline/<govID>/<dID>',methods=['GET','POST'])
+@login_required
 def timeline(dID=None, govID=None):
     pageType='timeline'
-    assessments = db.assessments
     backurl = request.headers.get("Referer")
     referrer = backurl.split('/')[3]
     
@@ -373,7 +462,6 @@ def timeline(dID=None, govID=None):
     if request.method == "GET":
         oid = dID
         dx = assessments.find_one({'_id': ObjectId(oid)})
-        patients = db.patients
         q = patients.find_one({'govID': govID })
         formattedDate = datetime.strptime(q['DOB'], '%Y-%m-%d').date().strftime('%m/%d/%Y')
         patient = {'govID': q['govID'], 'firstname': q['firstname'], 'lastname': q['lastname'], 'DOB': formattedDate,
@@ -420,15 +508,13 @@ def timeline(dID=None, govID=None):
 
 
 @app.route('/patienthistory/<govID>/<offset>', methods=['GET'])
+@login_required
 def patienthistory(govID, offset):
     pageType='patienthistory'
-    patients = db.patients
-    assessments = db.assessments
     q = patients.find_one({ "govID": govID }) 
     formattedDate = datetime.strptime(q['DOB'], '%Y-%m-%d').date().strftime('%m/%d/%Y')
     patient = {'govID': q['govID'], 'firstname': q['firstname'], 'lastname': q['lastname'], 'DOB': formattedDate,
                            'Gender': q['Gender'], 'OrthoType': q['OrthoType']}
-    
     count = assessments.find({'govID': govID}).count()
     if count != 0:
         url = 'http://127.0.0.1:5000/assessments/'+govID+'/'+offset
@@ -437,104 +523,15 @@ def patienthistory(govID, offset):
         prevOffset = aList['prev_url'] 
         showPrev = aList['showPrev']
         showNext = aList['showNext']
-        '''
-        sortedAssessments = sorted(
-        aList['result'],
-        key=lambda x: datetime.strptime(x['date'], '%m/%d/%Y'), reverse=True
-        )
-        '''
-        return render_template('patienthistory.html', showPrev=showPrev, showNext=showNext, prevOffset=prevOffset, nextOffset=nextOffset, pageType=pageType, patient=patient, assessments=aList['result'], loggedEmail = session['user'])
+
+        return render_template('patienthistory.html', showPrev=showPrev, showNext=showNext, prevOffset=prevOffset, nextOffset=nextOffset, pageType=pageType, patient=patient, assessments=aList['result'])
     else:
-        return render_template('patienthistory.html', pageType=pageType, patient=patient, assessments=[], loggedEmail = session['user'])
-'''
-@app.route('/patienthistory2/<govID>', methods=['GET'])
-def patienthistory2(govID):
-    pageType='patienthistory'
-    patients = db.patients
-    assessments = db.assessments
-    q = patients.find_one({ "govID": govID }) 
+        return render_template('patienthistory.html', pageType=pageType, patient=patient, assessments=[])
 
-    aList = []
-    for a in assessments.find({ "govID": govID }):
-        formattedDate = datetime.strptime(a['date'], '%Y-%m-%d').date().strftime('%m/%d/%Y')
-        if a['type'] == 'Periodontal disease diagnosis':
-            a = ({'_id': a['_id'], 
-                'govID': a['govID'],
-                'date': formattedDate, 
-                'type': a['type'],
-                'info': {
-                'diagnosis' : a['info']['diagnosis'],
-                'severity' : a['info']['severity'],
-                'CF':
-                    {
-                    a['info']['CF']['F1'],
-                    a['info']['CF']['F2'],
-                    a['info']['CF']['F3'],
-                    },
-                'plaque': a['info']['plaque']
-                }})
-            jsonA = json.loads(json_util.dumps(a))
-            aList.append(jsonA)
-        else:
-            a = ({'_id': a['_id'], 
-                'govID': a['govID'],
-                'date': formattedDate, 
-                'type': a['type'],
-                'info': [
-                {
-                'diagnosis' : a['info'][0]['diagnosis'],
-                'severity' : a['info'][0]['severity'],
-                'CF':
-                    {
-                    a['info'][0]['CF']['F1'],
-                    a['info'][0]['CF']['F2'],
-                    a['info'][0]['CF']['F3'],
-                    },
-                'plaque': a['info'][0]['plaque']
-                },
-                 {
-                'diagnosis' : a['info'][1]['diagnosis'],
-                'severity' : a['info'][1]['severity'],
-                'CF':
-                    {
-                    a['info'][1]['CF']['F1'],
-                    a['info'][1]['CF']['F2'],
-                    a['info'][1]['CF']['F3'],
-                    },
-                'plaque': a['info'][1]['plaque']
-                },
-                 {
-                'diagnosis' : a['info'][2]['diagnosis'],
-                'severity' : a['info'][2]['severity'],
-                'CF':
-                    {
-                    a['info'][2]['CF']['F1'],
-                    a['info'][2]['CF']['F2'],
-                    a['info'][2]['CF']['F3'],
-                    },
-                'plaque': a['info'][2]['plaque']
-                }
-                ]})
 
-            jsonA = json.loads(json_util.dumps(a))
-            aList.append(jsonA)
-
-    sortedAssessments = sorted(
-    aList,
-    key=lambda x: datetime.strptime(x['date'], '%m/%d/%Y'), reverse=True
-    )
-
-    formattedDate = datetime.strptime(q['DOB'], '%Y-%m-%d').date().strftime('%m/%d/%Y')
-    patient = {'govID': q['govID'], 'firstname': q['firstname'], 'lastname': q['lastname'], 'DOB': formattedDate,
-                           'Gender': q['Gender'], 'OrthoType': q['OrthoType']}
-
-    return render_template('patienthistory.html', pageType=pageType, patient=patient, assessments = sortedAssessments, loggedEmail = session['user'])
-'''
 #==== API CODE ====
 @app.route('/users', methods=['GET'])
 def get_all_users():
-    users = db.users
-
     output = []
 
     for q in users.find():
@@ -546,8 +543,6 @@ def get_all_users():
 
 @app.route('/users/<email>', methods=['GET'])
 def get_a_user(email):
-    users = db.users
-
     q = users.find_one({'email': email})
 
     if q:
@@ -561,8 +556,6 @@ def get_a_user(email):
 
 @app.route('/users', methods=['POST'])
 def add_user():
-    users = db.users
-
     email = request.json['email']
     password = request.json['password']
     fullname = request.json['fullname']
@@ -580,8 +573,6 @@ def add_user():
 
 @app.route('/mypatients/<email>', methods=['GET'])
 def get_all_patients(email):
-    patients = db.patients
-
     output = []
     q = patients.find({'dentistemail': email})
 
@@ -596,8 +587,6 @@ def get_all_patients(email):
 
 @app.route('/findapatientbyid/<email>/<govID>', methods=['GET'])
 def get_a_patient_by_id(email, govID):
-    patients = db.patients
-
     q = patients.find_one({"$and": [{"govID": govID}, {"dentistemail": email}]})
     if q:
         output = {'govID': q['govID'], 'firstname': q['firstname'], 'lastname': q['lastname'], 'DOB': q['DOB'],
@@ -609,8 +598,6 @@ def get_a_patient_by_id(email, govID):
 
 @app.route('/findapatientbyname/<email>/<name>', methods=['GET'])
 def get_a_patient_by_name(email, name):
-    patients = db.patients
-
     q = patients.find_one({"$and": [{"dentistemail": email}, {"$or": [{"firstname": re.compile(name, re.IGNORECASE)}, {"lastname": re.compile(name, re.IGNORECASE)}]}]})
     if q:
         output = {'govID': q['govID'], 'firstname': q['firstname'], 'lastname': q['lastname'], 'DOB': q['DOB'],
@@ -623,7 +610,6 @@ def get_a_patient_by_name(email, name):
 #PUT/UPDATE a patient
 @app.route('/putpatient/<govID>', methods=['PUT'])
 def update_patient(govID):
-    patients = db.patients
     #patient = request.json['govID']
     toUpdate = { "govID": govID }
     
@@ -641,8 +627,7 @@ def update_patient(govID):
 
 @app.route('/putuser', methods=['PUT'])
 def update_user():
-    users = db.users
-    toUpdate = { "email": session['user'] }
+    toUpdate = { "email": current_user.email }
     
     newGovID = request.json['govID']
     newFirstName = request.json['firstname']
@@ -658,8 +643,6 @@ def update_user():
 
 @app.route('/postpatient', methods=['POST'])
 def add_question():
-    patients = db.patients
-
     govID = request.json['govID']
     firstname = request.json['firstname']
     lastname = request.json['lastname']
@@ -694,8 +677,6 @@ def add_question():
 @app.route('/getassessments/<govID>', methods=['GET'])
 def getassessments(govID):
     pageType='patienthistory'
-    patients = db.patients
-    assessments = db.assessments
     q = patients.find_one({ "govID": govID }) 
 
     aList = []
@@ -772,18 +753,17 @@ def getassessments(govID):
 
 @app.route('/assessments/<govID>/<offset>', methods=['GET'])
 def assessmentspag(govID, offset):
-    assessments = db.assessments
     offset = int(offset)
     limit = 6
     count = assessments.find({'govID': govID}).count()
 
     starting_id = assessments.find().sort('_id', -1)
     last_id = starting_id[offset]['_id']
-    assessments = assessments.find({'_id' : {'$lte' : last_id}, 'govID': govID}).sort('_id', -1).limit(limit)
+    assessmentsList = assessments.find({'_id' : {'$lte' : last_id}, 'govID': govID}).sort('_id', -1).limit(limit)
     
     output = []
 
-    for a in assessments:
+    for a in assessmentsList:
         formattedDate = datetime.strptime(a['date'], '%Y-%m-%d').date().strftime('%m/%d/%Y')
         if a['type'] == 'Periodontal disease diagnosis':
             a = ({'_id': a['_id'], 
@@ -855,7 +835,7 @@ def assessmentspag(govID, offset):
     else:
         showPrev = 'yes'
 
-    if offset+limit > count:
+    if offset+limit >= count or count == limit:
         showNext = 'no'
     else:
         showNext = 'yes'
@@ -863,4 +843,87 @@ def assessmentspag(govID, offset):
     next_url = '/assessments/'+govID+'/'+str(offset+limit)  
     prev_url =  '/assessments/'+govID+'/'+str(offset-limit)  
     return jsonify({'showPrev': showPrev, 'showNext': showNext, 'prev_url':str(offset-limit), 'next_url': str(offset+limit), 'result' : sortedAssessments})
+
+
+@app.route('/patients/<email>/<offset>', methods=['GET'])
+def paginate_patients(email, offset):
+    offset = int(offset)
+    limit = 10
+    count = patients.find({'dentistemail': email}).count()
+
+    starting_id = patients.find().sort('_id', -1)
+    last_id = starting_id[offset]['_id']
+    patientList = patients.find({'_id' : {'$lte' : last_id}, 'dentistemail': email}).sort('_id', -1).limit(limit)
     
+    output = []
+
+    for a in patientList:
+        formattedDate = datetime.strptime(a['DOB'], '%Y-%m-%d').date().strftime('%m/%d/%Y')
+        a = ({'_id': a['_id'], 
+                'govID': a['govID'],
+                'firstname': a['firstname'],
+                'lastname': a['lastname'],
+                'DOB': formattedDate, 
+                'Gender': a['Gender'],
+                'OrthoType': a['OrthoType'],
+                })
+        
+        jsonA = json.loads(json_util.dumps(a))
+        output.append(jsonA)
+
+    #sortedPatients = sorted(output,key=lambda x: x['firstname'])
+
+    if offset-limit < 0:
+        showPrev = 'no'
+    else:
+        showPrev = 'yes'
+
+    if offset+limit >= count or count == limit:
+        showNext = 'no'
+    else:
+        showNext = 'yes'
+
+    next_url = '/patients/'+str(offset+limit)  
+    prev_url =  '/patients/'+str(offset-limit)  
+    return jsonify({'showPrev': showPrev, 'showNext': showNext, 'prev_url':str(offset-limit), 'next_url': str(offset+limit), 'result' : output})
+
+@app.route('/patientssearch/<email>/<name>/<offset>', methods=['GET'])
+def search_patients(email, name, offset):
+    offset = int(offset)
+    limit = 10
+
+    starting_id = patients.find().sort('_id', -1)
+    last_id = starting_id[offset]['_id']
+    count = patients.find({"$and": [{"dentistemail": email}, {'_id' : {'$lte' : last_id}}, {"$or": [{"firstname": re.compile(name, re.IGNORECASE)}, {"lastname": re.compile(name, re.IGNORECASE)}]}]}).count()
+    patientList = patients.find({"$and": [{"dentistemail": email}, {'_id' : {'$lte' : last_id}}, {"$or": [{"firstname": re.compile(name, re.IGNORECASE)}, {"lastname": re.compile(name, re.IGNORECASE)}]}]}).sort('_id', -1).limit(limit)
+    
+    output = []
+
+    for a in patientList:
+        formattedDate = datetime.strptime(a['DOB'], '%Y-%m-%d').date().strftime('%m/%d/%Y')
+        a = ({'_id': a['_id'], 
+                'govID': a['govID'],
+                'firstname': a['firstname'],
+                'lastname': a['lastname'],
+                'DOB': formattedDate, 
+                'Gender': a['Gender'],
+                'OrthoType': a['OrthoType'],
+                })
+        
+        jsonA = json.loads(json_util.dumps(a))
+        output.append(jsonA)
+
+
+    if offset-limit < 0:
+        showPrev = 'no'
+    else:
+        showPrev = 'yes'
+
+    if offset+limit > count or count == limit:
+        showNext = 'no'
+    else:
+        showNext = 'yes'
+
+    next_url = '/patients/'+str(offset+limit)  
+    prev_url =  '/patients/'+str(offset-limit)  
+    return jsonify({'count':count, 'showPrev': showPrev,  'showNext': showNext, 'prev_url':str(offset-limit), 'next_url': str(offset+limit), 'result' : output})
