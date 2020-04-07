@@ -3,13 +3,7 @@
 <div class="form-group">
     <label for="{{ field.name }}" name="{{ field.name }}"> {{ field.label.text }} </label>
     {{ field(class_='form-control', **kwargs)|safe }}
-        <ul>
-        {% for error in field.errors %}
-        <div class="alert alert-danger" role="alert">
-		  <li style="color:red;">{{ error }}</li>
-		</div>  
-        {% endfor %}
-        </ul>
+
 </div>
 
 {% endmacro %}
@@ -19,13 +13,7 @@
 <div class="form-group">
     <label for="{{ field.name }}" name="{{ field.name }}" > {{ field.label.text }} </label>
      <input class="form-control" type="text" value="{{value}}">
-        <ul>
-        {% for error in field.errors %}
-        <div class="alert alert-danger" role="alert">
-          <li style="color:red;">{{ error }}</li>
-        </div>  
-        {% endfor %}
-        </ul>
+
 </div>
 
 {% endmacro %}

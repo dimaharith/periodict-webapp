@@ -1,4 +1,4 @@
-from flask import Flask, render_template, url_for, request, session, redirect, flash
+from flask import Flask, render_template, url_for, request, session, redirect, flash, Markup
 from app import app
 from flask import Flask
 from flask import Flask, jsonify, request, make_response
@@ -18,9 +18,17 @@ from bson import json_util, ObjectId
 import json
 import re
 from flask_login import LoginManager, current_user, login_user, login_required, logout_user
+from flask_mail import Mail, Message
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired
+from threading import Thread
 
 app.config['JSON_SORT_KEYS'] = False
-app.config['TESTING'] = True
+app.config['TESTING'] = False
+app.config.from_pyfile('config.cfg')
+
+mail = Mail(app)
+
+s = URLSafeTimedSerializer('Thisisasecret!')
 CONNECTION_STRING = "mongodb+srv://dima:berryjuice09@perio-cluster-80lad.mongodb.net/test?retryWrites=true&w=majority"
 client = pymongo.MongoClient(CONNECTION_STRING)
 db = client.get_database('perio-test')
@@ -64,6 +72,15 @@ login_manager.init_app(app)
 login_manager.login_view = 'index'
 
 
+def send_async_email(app, msg):
+    with app.app_context():
+        mail.send(msg)
+
+
+def send_email(subject, sender, recipients, body):
+    msg = Message(subject, sender=sender, recipients=recipients)
+    msg.html = body
+    Thread(target=send_async_email, args=(app, msg)).start()
 
 class LoginForm(FlaskForm):
     email = StringField('E-mail', validators=[InputRequired()])
@@ -99,6 +116,10 @@ class RegisterForm(FlaskForm):
     password = PasswordField('Password', validators=[InputRequired()])
     confirmPassword = PasswordField('Confirm Password', validators=[InputRequired()])
 
+class ResetForm(FlaskForm):
+    newPassword = PasswordField('New Password', validators=[InputRequired()])
+    confirmPassword = PasswordField('Confirm Password', validators=[InputRequired()])
+
 class ForgotForm(FlaskForm):
     email = StringField('E-mail', validators=[InputRequired()])
 
@@ -125,17 +146,23 @@ def index():
         return redirect(url_for('dashboard', offset=0))
     pageType='index'
     form = LoginForm()
-    if form.validate_on_submit():
-        user = db.users.find_one({"email": form.email.data})
-        if user and bcrypt.hashpw(request.form['password'].encode('utf-8'), user['password']) == user['password']:
-            user_obj = User(email=user['email'], fullname=user['fullname'])
-            login_user(user_obj)
-            next_page = request.args.get('next')
-            if not next_page or url_parse(next_page).netloc != '':
-                next_page = url_for('dashboard', offset=0)
-            return redirect(next_page)
-        else:
-            flash('Incorrect email/password')
+
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            user = db.users.find_one({"email": form.email.data})
+            if user and user['confirmed'] == 'true' and bcrypt.hashpw(request.form['password'].encode('utf-8'), user['password']) == user['password']:
+                user_obj = User(email=user['email'], fullname=user['fullname'])
+                login_user(user_obj)
+                next_page = request.args.get('next')
+                if not next_page or url_parse(next_page).netloc != '':
+                    next_page = url_for('dashboard', offset=0)
+                return redirect(next_page)
+
+            elif user['confirmed'] == 'false':
+                flash(Markup('Your account has not been verified yet. Please verify your account by clicking on the link sent to your e-mail or resend the link by clicking <a href="/resend_link/{}" class="alert-link">here</a>'.format(user['email'])),'error')
+            else:
+                flash(u'Incorrect email/password','error')
+
     return render_template('index.html', pageType=pageType, form=form)
 
 
@@ -161,21 +188,106 @@ def register():
         else:
             hashpass = bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt())
             url = 'http://127.0.0.1:5000/users'
-            users.insert({'email' : request.form['email'], 'password' : hashpass, 'fullname': request.form['fullname']})
+            users.insert({'email' : request.form['email'], 'password' : hashpass, 'fullname': request.form['fullname'], 'confirmed': False})
             user_obj = User(email=request.form['email'], fullname=request.form['fullname'])
-            login_user(user_obj)
+
+            email = request.form['email']
+            token = s.dumps(email, salt='email-confirm')
+
+            #msg = Message('[PerioDict] Confirm Your E-mail', sender='periodictteam@gmail.com', recipients=[email])
+
+            link = url_for('cseonfirm_email', token=token, _external=True)
+
+            msg = '<p> Dear {}, </p> <p> Thanks for signing up for PerioDict! </p> <b> To verify your account, please click on this link (or paste it into your web browser): <br></b> {} <br> Thanks! <br> The PerioDict Team'.format(request.form['fullname'], link)
+
+            #mail.send(msg)
+            send_email('[PerioDict] Confirm Your E-mail', 'periodictteam@gmail.com', [email], msg)
             next_page = request.args.get('next')
             if not next_page or url_parse(next_page).netloc != '':
-                next_page = url_for('dashboard', offset=0)
+                next_page = url_for('index')
+            flash(u'A verification e-mail has been sent to your e-mail address: {}. Please verify your account to proceed.'.format(email), 'success')
             return redirect(next_page)
 
     return render_template('register.html', pageType=pageType, form=form)
 
-@app.route('/forgotpassword')
+@app.route('/confirm_email/<token>')
+def confirm_email(token):
+    try:
+        email = s.loads(token, salt='email-confirm', max_age=3600)
+    except SignatureExpired:
+        flash(Markup('Your verification token has expired, please click <a href="/resend_link/{}" class="alert-link">here</a> to resend the verification link.'.format(email)), 'error')
+        return redirect(url_for('index'))
+    toUpdate = { "email": email }
+    newValues = { "$set": {'confirmed': True}}
+    users.update_one(toUpdate, newValues)
+    flash(u'Your e-mail address, {}, has been successfully verified. You may now login to get started!'.format(email), 'success')
+    return redirect(url_for('index'))
+
+@app.route('/resend_link/<email>', methods=['GET'])
+def resend_link(email):
+    thisEmail = email
+    token = s.dumps(thisEmail, salt='email-confirm')
+    msg = Message('[PerioDict] Confirm Your E-mail', sender='periodictteam@gmail.com', recipients=[thisEmail])
+    link = url_for('confirm_email', token=token, _external=True)
+    msg.html = '<p> Dear {}, </p> <p> Thanks for signing up for PerioDict! </p> <b> To verify your account, please click on this link (or paste it into your web browser):</b> <br> {} <br> Thanks! <br> The PerioDict Team'.format(email, link)
+    mail.send(msg)
+    flash(u'A link has been sent to your e-mail address: {}'.format(email), 'success')
+    return redirect(url_for('index'))
+
+@app.route('/forgotpassword', methods=['GET','POST'])
 def forgotpassword():
     form = ForgotForm()
     pageType = 'forgotpassword'
+
+    if request.method == "GET":
+        return render_template('forgotpassword.html', pageType=pageType, form=form)
+
+    if request.method == "POST":
+        login_user = users.find_one({'email': request.form['email']})
+        if login_user:
+            email = request.form['email']
+            token = s.dumps(email, salt='password-reset')
+            link = url_for('resetpassword', email=email, token=token, _external=True)
+            msg = '<p> Dear {}, </p> <b> To reset your password, please click on this link (or paste it into your web browser): <br></b> {} <p>If you have not requested a password reset simply ignore this message.</p> <br> Thanks! <br> The PerioDict Team'.format(login_user['fullname'], link)
+            send_email('[PerioDict] Password Reset', 'periodictteam@gmail.com', [email], msg)
+            flash(u'A link to reset your password has been sent to your e-mail: {}'.format(email),'success')
+            return redirect(url_for('index'))
+        else:
+            flash("We can't find your e-mail address. Are you sure you entered the correct e-mail address?",'error')
+            return redirect(url_for('forgotpassword'))
+
     return render_template('forgotpassword.html', pageType=pageType, form=form)
+
+@app.route('/resetpassword/<token>', methods=['GET','POST'])
+def resetpassword(token):
+    form = ResetForm()
+    pageType = 'resetpassword'
+    if request.method == "GET":
+        try:
+            email = s.loads(token, salt='password-reset', max_age=3600)
+        except SignatureExpired:
+            flash(u'The password reset token has expired. Please request another password reset.', 'error')
+            return redirect(url_for('index'))
+        return render_template('resetpassword.html', pageType=pageType, form=form, senttoken=token)
+
+    if request.method == "POST":
+        if request.form['newPassword'] == request.form['confirmPassword']:
+            
+            try:
+                email = s.loads(token, salt='password-reset', max_age=3600)
+            except SignatureExpired:
+                flash(u'The password reset token has expired. Please request another password reset.', 'error')
+                return redirect(url_for('index'))
+            hashpass = bcrypt.hashpw(request.form['newPassword'].encode('utf-8'), bcrypt.gensalt())
+            toUpdate = {'email': email}
+            updatedUser = { "$set": {'password': hashpass}}
+            users.update_one(toUpdate, updatedUser)
+            flash(u'Successfully changed password for {}'.format(email), 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('Passwords do not match','error')
+            return redirect(url_for('resetpassword', pageType=pageType, form=form, senttoken=token))
+
 
 @app.route('/dashboard/<offset>', methods=['GET','POST'])
 @login_required
@@ -610,7 +722,6 @@ def get_a_patient_by_name(email, name):
 #PUT/UPDATE a patient
 @app.route('/putpatient/<govID>', methods=['PUT'])
 def update_patient(govID):
-    #patient = request.json['govID']
     toUpdate = { "govID": govID }
     
     newGovID = request.json['govID']
