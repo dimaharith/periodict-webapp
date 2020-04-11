@@ -70,7 +70,7 @@
     <!-- Patient Info Card END -->
 
   <div class="mycontainer" style="margin: auto;">
-        <div class="row" style="margin-top: 1em; margin-left: 3rem !important;">
+        <div class="row" style="margin-top: -1em; margin-left: 3rem !important;">
         {%  for assessment in assessments  %}  
      <div class="col-md-12">
          <div class="row">
@@ -80,18 +80,18 @@
       
           </p>
 
-       <div class="card" style="width: 40rem; height: auto; margin:0 auto;">
-  <img src="{{ url_for('static', filename='img/'+assessment['img']) }}"  style="height: 100%; width: 100%;" alt="Card image cap">
+       <div class="card" style="width: 40rem; height: auto; margin:0 auto; margin-right: 1.5rem; margin-top: 4rem; ">
+  <img src="{{ url_for('static', filename='img/'+assessment['img']) }}"  style="height: 100%; width: 100%;" alt="Card image cap" >
 </div>
          </div>
          <div class="col-md-6 col-sm-12">
-         <div class="table-responsive" style="width: 30em; height: 21.5em; margin-top: 2rem; margin-left: 2rem;">
+         <div class="table-responsive" style="width: 40em; height: 21.5em; margin-top: 2rem; margin-left: -1rem;">
 
                 <table class="table table-hover w-100  d-block d-md-table" style="margin: auto;">
                     <thead>
                         <tr class="spacer" style="background-color: #416469; color: white;">
 
-                            <th scope="col" colspan="4">
+                            <th scope="col" colspan="6">
                             {% if loop.index == 1 %}
                              Before applying orthodontic appliance (T0)
                              {% elif loop.index == 2 %}
@@ -106,41 +106,61 @@
                         </tr>
                         <tr class="spacer" style="background-color: #678589; color: white;">
 
-                            <th scope="col" colspan="2">Diagnosis</th>
-                            <th scope="col" colspan="2" style="text-align: left">Severity</th>
+                            <th scope="col" colspan="3">Diagnosis</th>
+                            <th scope="col" colspan="3" style="text-align: left">Severity</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr class="spacer">
-                            <td colspan="2">{{assessment['diagnosis']}}</td>
-                            <td colspan="2">{{assessment['severity']}}</td>
+                            <td colspan="3">{{assessment['diagnosis']}}</td>
+                            <td colspan="3">{{assessment['severity']}}</td>
                         </tr>
                     </tbody>
+                     <thead>
+                        <tr class="spacer" style="background-color: #678589; color: white;">
+                            <th scope="col" colspan="6">Gingival Index Scores</th>
+                        </tr>
+                    
+            <tr class="spacer" style="background-color: #678589; color: white;">
+                            <th scope="col" colspan="3" style="text-align: center">Tooth No. 11</th>
+                            <th scope="col" colspan="3" style="text-align: center">Tooth No. 21</th>
+                        </tr>
+                    </thead>
                       <thead>
                         <tr class="spacer" style="background-color: #678589; color: white;">
-
-                            <th scope="col">Clinical Findings</th>
-                            <th scope="col" style="text-align: center">F1</th>
-                            <th scope="col" style="text-align: center">F2</th>
-                            <th scope="col" style="text-align: center">F3</th>
+                            <th scope="col" style="text-align: center">Distal</th>
+                            <th scope="col" style="text-align: center">Mid</th>
+                            <th scope="col" style="text-align: center">Mesial</th>
+                            <th scope="col" style="text-align: center">Mesial</th>
+                            <th scope="col" style="text-align: center">Mid</th>
+                            <th scope="col" style="text-align: center">Distal</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr class="spacer">
-                            <td></td>
-                             {% for a in assessment['CF'] %} 
+                            {% if loop.index == 1 %}
+                             {% for a in gi_0 %} 
                             <td style="text-align: center"> {{a}} </td>
                              {% endfor %} 
+                             {% elif loop.index == 2 %}
+                             {% for a in gi_1 %} 
+                            <td style="text-align: center"> {{a}} </td>
+                             {% endfor %}
+                             {% elif loop.index == 3 %}
+                             {% for a in gi_2 %} 
+                            <td style="text-align: center"> {{a}} </td>
+                             {% endfor %}
+                             {% endif %}
                         </tr>
                     </tbody>
                     <thead>
                         <tr class="spacer" style="background-color: #678589; color: white;">
-                            <th scope="col" colspan="4" style="text-align: left">Plaque Levels</th>
+                            <th scope="col" colspan="6" style="text-align: left">Plaque Levels</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr class="spacer">
-                            <td colspan="4">{{ assessment['plaque'] }}</td>
+                            <td colspan="6">{{ assessment['plaque'] }}</td>
                         </tr>
                     </tbody>
                 </table>

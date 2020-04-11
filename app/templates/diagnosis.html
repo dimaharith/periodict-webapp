@@ -69,10 +69,10 @@
     <!-- Patient Info Card END -->
 <!-- img -->
   
-    <div class="row" style="margin-top: 3em;">
+    <div class="row" style="margin-top: 2em;">
         <div class="col-md-5">
             
-              <div class="card" style="width: 35em; height: 23em; margin:0 auto; margin-left: 4.5em;">
+              <div class="card" style="width: 35em; height: 23em; margin:0 auto; margin-left: 4.5em; margin-top: 0.5rem;">
   <img src="{{ url_for('static', filename='img/'+assessment.info['img']) }}" style="height: 100%; width: 100%;" alt="assessment.info['img']">
 </div>
 
@@ -81,47 +81,59 @@
         <!-- img end -->
 <!-- Diagnosis Info -->
         <div class="col-md-7">
-            <div class="table-responsive" style="width: 50em; height: 21.5em;">
+            <div class="table-responsive" style="width: 50em; height: 21.5em; margin-top: -1.5rem;">
 
                 <table class="table table-hover w-100  d-block d-md-table" style="margin: auto;">
                     <thead>
                         <tr class="spacer" style="background-color: #678589; color: white;">
 
-                            <th scope="col" colspan="2">Diagnosis</th>
-                            <th scope="col" colspan="2" style="text-align: left">Severity</th>
+                            <th scope="col" colspan="3" >Diagnosis</th>
+                            <th scope="col" colspan="3" style="text-align: left">Severity</th>
                         </tr>
                     </thead>
-                    <tbody>
                         <tr class="spacer">
-                            <td colspan="2">{{assessment.info['diagnosis']}}</td>
-                            <td colspan="2">{{assessment.info['severity']}}</td>
+                            <td colspan="3">{{assessment.info['diagnosis']}}</td>
+                            <td colspan="3">{{assessment.info['severity']}}</td>
                         </tr>
-                    </tbody>
+                     <thead>
+                        <tr class="spacer" style="background-color: #678589; color: white;">
+                            <th scope="col" colspan="6">Gingival Index Scores</th>
+                        </tr>
+                    
+            <tr class="spacer" style="background-color: #678589; color: white;">
+                            <th scope="col" colspan="3" style="text-align: center">Tooth No. 11</th>
+                            <th scope="col" colspan="3" style="text-align: center">Tooth No. 21</th>
+                        </tr>
+                    </thead>
                       <thead>
                         <tr class="spacer" style="background-color: #678589; color: white;">
+                            <th scope="col" style="text-align: center">Distal</th>
+                            <th scope="col" style="text-align: center">Mid</th>
+                            <th scope="col" style="text-align: center">Mesial</th>
+                            <th scope="col" style="text-align: center">Mesial</th>
+                            <th scope="col" style="text-align: center">Mid</th>
+                            <th scope="col" style="text-align: center">Distal</th>
 
-                            <th scope="col">Clincal Findings</th>
-                            <th scope="col" style="text-align: center">F1</th>
-                            <th scope="col" style="text-align: center">F2</th>
-                            <th scope="col" style="text-align: center">F3</th>
+
+
                         </tr>
                     </thead>
                     <tbody>
                         <tr class="spacer">
-                            <td></td>
-                             {% for a in assessment.info['CF'] %}
-                            <td style="text-align: center">{{ a  }}</td>
+                            {% for g in gi %}
+                            <td style="text-align: center">{{ g  }}</td>
                             {% endfor %}
+
                         </tr>
                     </tbody>
                     <thead>
                         <tr class="spacer" style="background-color: #678589; color: white;">
-                            <th scope="col" colspan="4" style="text-align: left">Plaque Levels</th>
+                            <th scope="col" colspan="6" style="text-align: left">Plaque Levels</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr class="spacer">
-                            <td colspan="4">{{assessment.info['plaque']}}</td>
+                            <td colspan="6">{{assessment.info['plaque']}}</td>
                         </tr>
                     </tbody>
                 </table>

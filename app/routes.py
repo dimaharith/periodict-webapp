@@ -149,9 +149,9 @@ def index():
 
     if request.method == 'POST':
         if form.validate_on_submit():
-            user = db.users.find_one({"email": form.email.data})
+            user = db.users.find_one({"email": form.email.data.strip()})
             if user and user['confirmed'] == 'true' and bcrypt.hashpw(request.form['password'].encode('utf-8'), user['password']) == user['password']:
-                user_obj = User(email=user['email'], fullname=user['fullname'])
+                user_obj = User(email=user['email'].strip(), fullname=user['fullname'])
                 login_user(user_obj)
                 next_page = request.args.get('next')
                 if not next_page or url_parse(next_page).netloc != '':
@@ -159,7 +159,7 @@ def index():
                 return redirect(next_page)
 
             elif user['confirmed'] == 'false':
-                flash(Markup('Your account has not been verified yet. Please verify your account by clicking on the link sent to your e-mail or resend the link by clicking <a href="/resend_link/{}" class="alert-link">here</a>'.format(user['email'])),'error')
+                flash(Markup('Your account has not been verified yet. Please verify your account by clicking on the link sent to your e-mail or resend the link by clicking <a href="/resend_link/{}" class="alert-link">here</a>'.format(user['email'].strip())),'error')
             else:
                 flash(u'Incorrect email/password','error')
 
@@ -175,9 +175,9 @@ def logout():
 def register():
     pageType = 'register'
     form = RegisterForm()
-
+    stripped = request.form['email'].strip()
     if request.method == 'POST' and form.validate_on_submit():
-        p_user = users.find_one({'email': request.form['email']})
+        p_user = users.find_one({'email': stripped})
 
         if p_user:
             flash('An account with this email already exists','error')
@@ -188,19 +188,15 @@ def register():
         else:
             hashpass = bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt())
             url = 'http://127.0.0.1:5000/users'
-            users.insert({'email' : request.form['email'], 'password' : hashpass, 'fullname': request.form['fullname'], 'confirmed': False})
-            user_obj = User(email=request.form['email'], fullname=request.form['fullname'])
+            users.insert({'email' : request.form['email'].strip(), 'password' : hashpass, 'fullname': request.form['fullname'], 'confirmed': 'false'})
+            user_obj = User(email=request.form['email'].strip(), fullname=request.form['fullname'])
 
-            email = request.form['email']
+            email = request.form['email'].strip()
             token = s.dumps(email, salt='email-confirm')
 
-            #msg = Message('[PerioDict] Confirm Your E-mail', sender='periodictteam@gmail.com', recipients=[email])
-
-            link = url_for('cseonfirm_email', token=token, _external=True)
-
+            link = url_for('confirm_email', token=token, _external=True)
             msg = '<p> Dear {}, </p> <p> Thanks for signing up for PerioDict! </p> <b> To verify your account, please click on this link (or paste it into your web browser): <br></b> {} <br> Thanks! <br> The PerioDict Team'.format(request.form['fullname'], link)
 
-            #mail.send(msg)
             send_email('[PerioDict] Confirm Your E-mail', 'periodictteam@gmail.com', [email], msg)
             next_page = request.args.get('next')
             if not next_page or url_parse(next_page).netloc != '':
@@ -218,7 +214,7 @@ def confirm_email(token):
         flash(Markup('Your verification token has expired, please click <a href="/resend_link/{}" class="alert-link">here</a> to resend the verification link.'.format(email)), 'error')
         return redirect(url_for('index'))
     toUpdate = { "email": email }
-    newValues = { "$set": {'confirmed': True}}
+    newValues = { "$set": {'confirmed': "true"}}
     users.update_one(toUpdate, newValues)
     flash(u'Your e-mail address, {}, has been successfully verified. You may now login to get started!'.format(email), 'success')
     return redirect(url_for('index'))
@@ -243,9 +239,9 @@ def forgotpassword():
         return render_template('forgotpassword.html', pageType=pageType, form=form)
 
     if request.method == "POST":
-        login_user = users.find_one({'email': request.form['email']})
+        login_user = users.find_one({'email': request.form['email'].strip()})
         if login_user:
-            email = request.form['email']
+            email = request.form['email'].strip()
             token = s.dumps(email, salt='password-reset')
             link = url_for('resetpassword', email=email, token=token, _external=True)
             msg = '<p> Dear {}, </p> <b> To reset your password, please click on this link (or paste it into your web browser): <br></b> {} <p>If you have not requested a password reset simply ignore this message.</p> <br> Thanks! <br> The PerioDict Team'.format(login_user['fullname'], link)
@@ -286,7 +282,7 @@ def resetpassword(token):
             return redirect(url_for('index'))
         else:
             flash('Passwords do not match','error')
-            return redirect(url_for('resetpassword', pageType=pageType, form=form, senttoken=token))
+            return redirect(url_for('resetpassword', pageType=pageType, form=form, senttoken=token, token=token))
 
 
 @app.route('/dashboard/<offset>', methods=['GET','POST'])
@@ -482,17 +478,28 @@ def diagnosis(dID=None, govID=None):
             'info': {
             'diagnosis' : dx['info']['diagnosis'],
             'severity' : dx['info']['severity'],
-            'CF':
+            'T11':
                 {
-                dx['info']['CF']['F1'],
-                dx['info']['CF']['F2'],
-                dx['info']['CF']['F3'],
+                dx['info']['T11']['dis'],
+                dx['info']['T11']['mid'],
+                dx['info']['T11']['mes'],
+                },
+            'T21':
+                {
+                dx['info']['T21']['mes'],
+                dx['info']['T21']['mid'],
+                dx['info']['T21']['dis'],
                 },
             'plaque': dx['info']['plaque'],
             'img' : dx['info']['img']
             }}
-
-        return render_template('diagnosis.html', pageType=pageType, assessment = assessment, patient=patient, referrer=referrer)
+        gi = [dx['info']['T11']['dis'],
+                dx['info']['T11']['mid'],
+                dx['info']['T11']['mes'],
+                dx['info']['T21']['mes'],
+                dx['info']['T21']['mid'],
+                dx['info']['T21']['dis']]
+        return render_template('diagnosis.html', gi=gi, pageType=pageType, assessment = assessment, patient=patient, referrer=referrer)
    
     if request.method == "POST":
         new_a = {'govID': govID,
@@ -501,11 +508,17 @@ def diagnosis(dID=None, govID=None):
             'info': {
                 'diagnosis' : 'Positive',
                 'severity' : 'Mild',
-                'CF':
+                'T11':
                     {
-                    'F1' : 't0 f1',
-                    'F2' : 't0 f2',
-                    'F3' : 't0 f3',
+                    'dis' : 't11 dis',
+                    'mid' : 't11 mid',
+                    'mes' : 't11 mes'
+                    },
+                'T21':
+                    {
+                    'mes' : 't21 mes',
+                    'mid' : 't21 mid',
+                    'dis' : 't21 dis'
                     },
                 'plaque': 'plaque t0',
                 'img' : request.form['img']
@@ -531,11 +544,17 @@ def timeline(dID=None, govID=None):
             'info': [{
                 'diagnosis' : 'Positive',
                 'severity' : 'Mild',
-                'CF':
+                'T11':
                     {
-                    'F1' : 't0 f1',
-                    'F2' : 't0 f2',
-                    'F3' : 't0 f3',
+                    'dis' : 't0 t11 dis',
+                    'mid' : 't0 t11 mid',
+                    'mes' : 't0 t11 mes'
+                    },
+                'T21':
+                    {
+                    'mes' : 't0 t21 mes',
+                    'mid' : 't0 t21 mid',
+                    'dis' : 't0 t21 dis'
                     },
                 'plaque': 'plaque t0',
                 'img' : request.form['imgt0']
@@ -543,11 +562,17 @@ def timeline(dID=None, govID=None):
                  {
                 'diagnosis' : 'Positive',
                 'severity' : 'Moderate',
-                'CF':
+                'T11':
                     {
-                   'F1' : 't1 f1',
-                    'F2': 't1 f2',
-                    'F3' : 't1 f3',
+                    'dis' : 't1 t11 dis',
+                    'mid' : 't1 t11 mid',
+                    'mes' : 't1 t11 mes'
+                    },
+                'T21':
+                    {
+                    'mes' : 't1 t21 mes',
+                    'mid' : 't1 t21 mid',
+                    'dis' : 't1 t21 dis'
                     },
                 'plaque': 'plaque t1',
             'img' : request.form['imgt1']
@@ -555,11 +580,17 @@ def timeline(dID=None, govID=None):
              {
                 'diagnosis' : 'Positive',
                 'severity' : 'Severe',
-            'CF':
+                'T11':
                     {
-                   'F1' :   't2 f1',
-                   'F2' : 't2 f2',
-                   'F3' : 't2 f3',
+                    'dis' : 't2 t11 dis',
+                    'mid' : 't2 t11 mid',
+                    'mes' : 't2 t11 mes'
+                    },
+                'T21':
+                    {
+                    'mes' : 't2 t21 mes',
+                    'mid' : 't2 t21 mid',
+                    'dis' : 't2 t21 dis'
                     },
             'plaque': 'plaque t2',
             'img' : request.form['imgt2']
@@ -567,9 +598,7 @@ def timeline(dID=None, govID=None):
             'comment' : 'yo patient sucks'
             }
 
-        #json_a = jsonify(new_a)
         a_id = assessments.insert(new_a)
-        #new_a = assessments.find_one({'_id': a_id})
         return redirect(url_for('timeline',dID=a_id, govID=govID))
     if request.method == "GET":
         oid = dID
@@ -583,11 +612,17 @@ def timeline(dID=None, govID=None):
         assessment = [{
                 'diagnosis' : dx['info'][0]['diagnosis'],
                 'severity' : dx['info'][0]['severity'],
-                'CF':
+                'T11':
                     {
-                    dx['info'][0]['CF']['F1'],
-                    dx['info'][0]['CF']['F2'],
-                    dx['info'][0]['CF']['F3'],
+                    dx['info'][0]['T11']['dis'],
+                    dx['info'][0]['T11']['mid'],
+                    dx['info'][0]['T11']['mes'],
+                    },
+                'T21':
+                    {
+                    dx['info'][0]['T21']['mes'],
+                    dx['info'][0]['T21']['mid'],
+                    dx['info'][0]['T21']['dis'],
                     },
                 'plaque': dx['info'][0]['plaque'],
                 'img' : dx['info'][0]['img']
@@ -595,28 +630,58 @@ def timeline(dID=None, govID=None):
                  {
                 'diagnosis' : dx['info'][1]['diagnosis'],
                 'severity' : dx['info'][1]['severity'],
-                'CF':
-                {
-                dx['info'][1]['CF']['F1'],
-                dx['info'][1]['CF']['F2'],
-                dx['info'][1]['CF']['F3'],
-                },
+                'T11':
+                    {
+                    dx['info'][1]['T11']['dis'],
+                    dx['info'][1]['T11']['mid'],
+                    dx['info'][1]['T11']['mes'],
+                    },
+                'T21':
+                    {
+                    dx['info'][1]['T21']['mes'],
+                    dx['info'][1]['T21']['mid'],
+                    dx['info'][1]['T21']['dis'],
+                    },
             'plaque': dx['info'][1]['plaque'],
             'img' : dx['info'][1]['img']
             },
              {
             'diagnosis' : dx['info'][2]['diagnosis'],
             'severity' : dx['info'][2]['severity'],
-            'CF':
-                {
-                dx['info'][2]['CF']['F1'],
-                dx['info'][2]['CF']['F2'],
-                dx['info'][2]['CF']['F3'],
-                },
+            'T11':
+                    {
+                    dx['info'][2]['T11']['dis'],
+                    dx['info'][2]['T11']['mid'],
+                    dx['info'][2]['T11']['mes'],
+                    },
+            'T21':
+                    {
+                    dx['info'][2]['T21']['mes'],
+                    dx['info'][2]['T21']['mid'],
+                    dx['info'][2]['T21']['dis'],
+                    },
             'plaque': dx['info'][2]['plaque'],
             'img' : dx['info'][2]['img']
             }]
-        return render_template('timeline.html', pageType=pageType, assessments = assessment, patient=patient, comment=comment, referrer=referrer)
+        gi_0 =[dx['info'][0]['T11']['dis'],
+                    dx['info'][0]['T11']['mid'],
+                    dx['info'][0]['T11']['mes'],
+                    dx['info'][0]['T21']['mes'],
+                    dx['info'][0]['T21']['mid'],
+                    dx['info'][0]['T21']['dis']] 
+        gi_1 =[dx['info'][1]['T11']['dis'],
+                    dx['info'][1]['T11']['mid'],
+                    dx['info'][1]['T11']['mes'],
+                    dx['info'][1]['T21']['mes'],
+                    dx['info'][1]['T21']['mid'],
+                    dx['info'][1]['T21']['dis']] 
+        gi_2 =[dx['info'][2]['T11']['dis'],
+                    dx['info'][2]['T11']['mid'],
+                    dx['info'][2]['T11']['mes'],
+                    dx['info'][2]['T21']['mes'],
+                    dx['info'][2]['T21']['mid'],
+                    dx['info'][2]['T21']['dis']] 
+        return render_template('timeline.html', pageType=pageType, gi_0=gi_0, gi_1=gi_1, gi_2=gi_2, assessments = assessment, patient=patient, comment=comment, referrer=referrer)
 
 
 @app.route('/patienthistory/<govID>/<offset>', methods=['GET'])
@@ -801,11 +866,17 @@ def getassessments(govID):
                 'info': {
                 'diagnosis' : a['info']['diagnosis'],
                 'severity' : a['info']['severity'],
-                'CF':
+                'T11':
                     {
-                    a['info']['CF']['F1'],
-                    a['info']['CF']['F2'],
-                    a['info']['CF']['F3'],
+                    a['info']['T11']['dis'],
+                    a['info']['T11']['mid'],
+                    a['info']['T11']['mes'],
+                    },
+                'T21':
+                    {
+                    a['info']['T21']['mes'],
+                    a['info']['T21']['mid'],
+                    a['info']['T21']['dis'],
                     },
                 'plaque': a['info']['plaque']
                 }})
@@ -820,33 +891,51 @@ def getassessments(govID):
                 {
                 'diagnosis' : a['info'][0]['diagnosis'],
                 'severity' : a['info'][0]['severity'],
-                'CF':
+                'T11':
                     {
-                    a['info'][0]['CF']['F1'],
-                    a['info'][0]['CF']['F2'],
-                    a['info'][0]['CF']['F3'],
+                    a['info'][0]['T11']['dis'],
+                    a['info'][0]['T11']['mid'],
+                    a['info'][0]['T11']['mes'],
+                    },
+                'T21':
+                    {
+                    a['info'][0]['T21']['mes'],
+                    a['info'][0]['T21']['mid'],
+                    a['info'][0]['T21']['dis'],
                     },
                 'plaque': a['info'][0]['plaque']
                 },
                  {
                 'diagnosis' : a['info'][1]['diagnosis'],
                 'severity' : a['info'][1]['severity'],
-                'CF':
+                'T11':
                     {
-                    a['info'][1]['CF']['F1'],
-                    a['info'][1]['CF']['F2'],
-                    a['info'][1]['CF']['F3'],
+                    a['info'][1]['T11']['dis'],
+                    a['info'][1]['T11']['mid'],
+                    a['info'][1]['T11']['mes'],
+                    },
+                'T21':
+                    {
+                    a['info'][1]['T21']['mes'],
+                    a['info'][1]['T21']['mid'],
+                    a['info'][1]['T21']['dis'],
                     },
                 'plaque': a['info'][1]['plaque']
                 },
                  {
                 'diagnosis' : a['info'][2]['diagnosis'],
                 'severity' : a['info'][2]['severity'],
-                'CF':
+                'T11':
                     {
-                    a['info'][2]['CF']['F1'],
-                    a['info'][2]['CF']['F2'],
-                    a['info'][2]['CF']['F3'],
+                    a['info'][2]['T11']['dis'],
+                    a['info'][2]['T11']['mid'],
+                    a['info'][2]['T11']['mes'],
+                    },
+                'T21':
+                    {
+                    a['info'][2]['T21']['mes'],
+                    a['info'][2]['T21']['mid'],
+                    a['info'][2]['T21']['dis'],
                     },
                 'plaque': a['info'][2]['plaque']
                 }
@@ -884,11 +973,17 @@ def assessmentspag(govID, offset):
                 'info': {
                 'diagnosis' : a['info']['diagnosis'],
                 'severity' : a['info']['severity'],
-                'CF':
+                'T11':
                     {
-                    a['info']['CF']['F1'],
-                    a['info']['CF']['F2'],
-                    a['info']['CF']['F3'],
+                    a['info']['T11']['dis'],
+                    a['info']['T11']['mid'],
+                    a['info']['T11']['mes'],
+                    },
+                'T21':
+                    {
+                    a['info']['T21']['mes'],
+                    a['info']['T21']['mid'],
+                    a['info']['T21']['dis'],
                     },
                 'plaque': a['info']['plaque']
                 }})
@@ -901,33 +996,51 @@ def assessmentspag(govID, offset):
                 {
                 'diagnosis' : a['info'][0]['diagnosis'],
                 'severity' : a['info'][0]['severity'],
-                'CF':
+                'T11':
                     {
-                    a['info'][0]['CF']['F1'],
-                    a['info'][0]['CF']['F2'],
-                    a['info'][0]['CF']['F3'],
+                    a['info'][0]['T11']['dis'],
+                    a['info'][0]['T11']['mid'],
+                    a['info'][0]['T11']['mes'],
+                    },
+                'T21':
+                    {
+                    a['info'][0]['T21']['mes'],
+                    a['info'][0]['T21']['mid'],
+                    a['info'][0]['T21']['dis'],
                     },
                 'plaque': a['info'][0]['plaque']
                 },
                  {
                 'diagnosis' : a['info'][1]['diagnosis'],
                 'severity' : a['info'][1]['severity'],
-                'CF':
+                'T11':
                     {
-                    a['info'][1]['CF']['F1'],
-                    a['info'][1]['CF']['F2'],
-                    a['info'][1]['CF']['F3'],
+                    a['info'][1]['T11']['dis'],
+                    a['info'][1]['T11']['mid'],
+                    a['info'][1]['T11']['mes'],
+                    },
+                'T21':
+                    {
+                    a['info'][1]['T21']['mes'],
+                    a['info'][1]['T21']['mid'],
+                    a['info'][1]['T21']['dis'],
                     },
                 'plaque': a['info'][1]['plaque']
                 },
                  {
                 'diagnosis' : a['info'][2]['diagnosis'],
                 'severity' : a['info'][2]['severity'],
-                'CF':
+                'T11':
                     {
-                    a['info'][2]['CF']['F1'],
-                    a['info'][2]['CF']['F2'],
-                    a['info'][2]['CF']['F3'],
+                    a['info'][2]['T11']['dis'],
+                    a['info'][2]['T11']['mid'],
+                    a['info'][2]['T11']['mes'],
+                    },
+                'T21':
+                    {
+                    a['info'][2]['T21']['mes'],
+                    a['info'][2]['T21']['mid'],
+                    a['info'][2]['T21']['dis'],
                     },
                 'plaque': a['info'][2]['plaque']
                 }

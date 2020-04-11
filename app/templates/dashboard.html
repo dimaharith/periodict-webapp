@@ -76,6 +76,7 @@
       <th scope="col"></th>
       <th scope="col">First Name</th>
       <th scope="col">Last Name</th>
+      <th scope="col">Government/Iqama ID</th>
       <th scope="col"></th>
     </tr>
   </thead>
@@ -86,6 +87,7 @@
       <th scope="row" style="color: #416469;">{{ loop.index+offset }}</th>
       <td>{{ patient['firstname'] }}</td>
       <td>{{ patient['lastname'] }}</td>
+      <td>{{ patient['govID'] }}</td>
       <td>
         <button class="fa fa-chevron-right" style="background-color: Transparent;
     background-repeat:no-repeat;
